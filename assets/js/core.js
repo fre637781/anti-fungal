@@ -162,12 +162,6 @@
     try { localStorage.setItem(VIEW_KEY, view); } catch (e) { /* private mode */ }
   }
 
-  /* `current` is 'desktop' or 'mobile'; returns the URL of the other build. */
-  function otherViewUrl(current) {
-    var target = current === 'mobile' ? '../index.html' : 'm/index.html';
-    return target + '?view=' + (current === 'mobile' ? 'desktop' : 'mobile') + location.hash;
-  }
-
   function copyText(text, onDone) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function () { onDone(true); }, function () { onDone(false); });
@@ -192,7 +186,6 @@
     pageReferences: pageReferences,
     storedView: storedView,
     setView: setView,
-    otherViewUrl: otherViewUrl,
     copyText: copyText
   };
 })(window);
