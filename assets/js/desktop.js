@@ -326,7 +326,7 @@
     });
   });
 
-  document.getElementById('toMobile').addEventListener('click', function () { FG.setView('mobile'); });
+  FG.installViewSwitch();
 
   window.addEventListener('hashchange', route);
 

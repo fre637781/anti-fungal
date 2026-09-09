@@ -162,6 +162,30 @@
     try { localStorage.setItem(VIEW_KEY, view); } catch (e) { /* private mode */ }
   }
 
+  /* URL of the same organism in the other build — the hash carries the reader
+     across, so switching never dumps them back on the landing page. */
+  function switchUrl(target) {
+    var base = target === 'mobile' ? 'm/index.html' : '../index.html';
+    return base + '?view=' + target + location.hash;
+  }
+
+  /* Wires every [data-switch-view] control on the page and keeps their hrefs in
+     step with the current organism. They stay real links, so long-press and
+     open-in-new-tab still behave. */
+  function installViewSwitch() {
+    var nodes = [].slice.call(document.querySelectorAll('[data-switch-view]'));
+    if (!nodes.length) return;
+
+    function refresh() {
+      nodes.forEach(function (a) { a.href = switchUrl(a.getAttribute('data-switch-view')); });
+    }
+    nodes.forEach(function (a) {
+      a.addEventListener('click', function () { setView(a.getAttribute('data-switch-view')); });
+    });
+    window.addEventListener('hashchange', refresh);
+    refresh();
+  }
+
   function copyText(text, onDone) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function () { onDone(true); }, function () { onDone(false); });
@@ -186,6 +210,8 @@
     pageReferences: pageReferences,
     storedView: storedView,
     setView: setView,
+    switchUrl: switchUrl,
+    installViewSwitch: installViewSwitch,
     copyText: copyText
   };
 })(window);

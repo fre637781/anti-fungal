@@ -34,6 +34,7 @@
 <!-- list screen -->
 <div class="screen" id="listScreen">
   <header class="appbar">
+    <a class="bar-switch" data-switch-view="desktop" href="../index.html?view=desktop">🖥 電腦版</a>
     <div class="sub" id="kicker">Document-based clinical reference</div>
     <h1>Fungal Treatment Guideline</h1>
     <div class="metrics" id="metrics"></div>
@@ -65,7 +66,7 @@
   </div>
 
   <footer class="footer pad">
-    <a class="view-switch" id="toDesktop" href="../index.html?view=desktop">🖥 切換到電腦版（完整表格）</a>
+    <a class="view-switch" data-switch-view="desktop" href="../index.html?view=desktop">🖥 切換到電腦版（完整表格）</a>
     <p><a href="../source/Fungal_Treatment_Guideline_Interactive_v23.html" download>⬇ 下載離線單檔版（約 1 MB）</a></p>
     <p>本網頁僅供醫療專業人員參考，不能取代臨床判斷、當地流行病學、感染科會診或藥物仿單。用藥前請核對原始 guideline 與最新藥品資訊。</p>
     <p id="buildinfo"></p>
@@ -76,6 +77,7 @@
 <div class="screen" id="detailScreen" hidden>
   <header class="detailbar" id="detailbar">
     <button class="backbtn" id="back">← 返回</button>
+    <a class="bar-switch" data-switch-view="desktop" href="../index.html?view=desktop">🖥 電腦版</a>
     <h2 id="dName"></h2>
     <div class="alias" id="dAlias"></div>
     <div class="grp" id="dGroup"></div>

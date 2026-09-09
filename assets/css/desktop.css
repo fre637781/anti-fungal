@@ -9,8 +9,10 @@
 .stats{display:flex;gap:10px;flex-wrap:wrap}
 .stat{background:#ffffff14;border:1px solid #ffffff24;border-radius:12px;padding:10px 14px;font-size:14px}
 .stat b{font-size:17px}
-.hero .view-switch{background:#ffffff1f;border-color:#ffffff3d;color:#fff}
-.hero .view-switch:hover{background:#ffffff30}
+.view-fab{position:fixed;right:20px;bottom:20px;z-index:40;display:inline-flex;align-items:center;gap:7px;
+  padding:12px 17px;border-radius:999px;background:#233c31;color:#fff!important;text-decoration:none;
+  font-size:14px;font-weight:800;box-shadow:0 6px 20px #0000002e;border:1px solid #ffffff26}
+.view-fab:hover{background:#2e5142}
 
 .wrap{max-width:1180px;margin:auto;padding:24px 20px 80px}
 
@@ -134,7 +136,8 @@ tbody tr.row-avoid:hover>td{background:#f1c3c3}
 @media print{
   .hero{background:#fff;color:#000;padding:20px 0}
   .hero p{color:#444}
-  .toolbar,.filters,.evidence-filterbar,.close,.fc-open,.view-controls,.audit-controls,.view-switch{display:none!important}
+  .toolbar,.filters,.evidence-filterbar,.close,.fc-open,.view-controls,.audit-controls,
+  .view-switch,.view-fab{display:none!important}
   /* Print whatever is on screen: the open sheet, or the list — never both. */
   .modal.open{position:static!important;display:block!important;overflow:visible}
   .modal.open ~ *,body:has(.modal.open) .wrap,body:has(.modal.open) .hero{display:none!important}

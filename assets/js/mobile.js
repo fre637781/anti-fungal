@@ -380,7 +380,7 @@
     });
   });
 
-  document.getElementById('toDesktop').addEventListener('click', function () { FG.setView('desktop'); });
+  FG.installViewSwitch();
 
   /* ---- boot -------------------------------------------------------------- */
   Promise.all([FG.loadMeta(), FG.loadIndex()]).then(function (res) {
