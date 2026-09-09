@@ -70,14 +70,23 @@ python3 -m http.server 8000
 ## 發佈到 GitHub Pages
 
 `.github/workflows/pages.yml` 會在 push 時先驗證 `data/` 與 `source/` 一致，再發佈整個
-repository。workflow 帶有 `enablement: true`，第一次執行時會自動幫 repository 開啟 Pages，
-不需要手動設定。
+repository。
 
-發佈後網址是 `https://fre637781.github.io/anti-fungal/`，手機版為
-`https://fre637781.github.io/anti-fungal/m/`。
+**第一次需要手動開啟 Pages（只做一次）：**
 
-> Pages 只能發佈公開內容。若 repository 是 private 且帳號沒有 Pages for private repos，
-> 需要先把 repository 改為 public（Settings → General → Danger Zone → Change visibility）。
+> GitHub repository → **Settings** → **Pages** → Build and deployment →
+> Source 選 **GitHub Actions** → 存檔
+
+（這一步需要 repository 管理權限，GitHub Actions 的內建 token 無法代勞。）
+
+開啟後回到 **Actions** 分頁，對最後一次 `Deploy to GitHub Pages` 按 **Re-run all jobs**，
+或直接再 push 一次即可完成發佈。
+
+網址：
+
+- 電腦版 `https://fre637781.github.io/anti-fungal/`
+- 手機版 `https://fre637781.github.io/anti-fungal/m/`
+- 直接連到某個菌種 `https://fre637781.github.io/anti-fungal/#g0o0`
 
 ## 使用限制
 
