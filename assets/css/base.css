@@ -1,0 +1,99 @@
+/* Tokens and the pieces that must look identical in both builds: the treatment
+   priority colour system, provenance chips and reference links. */
+:root{
+  --bg:#f5f6f4; --paper:#fff; --ink:#18211d; --muted:#66716b; --line:#dfe4e0;
+  --green:#315c49; --deep:#1f3f33; --amber:#a56d18; --red:#9b3f3f; --blue:#3c5f82;
+
+  --preferred-bg:#d8f0df;   --preferred-edge:#23824b;   --preferred-text:#155b35;
+  --alternative-bg:#fff0bd; --alternative-edge:#c58a00; --alternative-text:#765300;
+  --salvage-bg:#d9eaff;     --salvage-edge:#3478bd;     --salvage-text:#245787;
+  --avoid-bg:#f9d6d6;       --avoid-edge:#c53b3b;       --avoid-text:#8d2525;
+
+  --radius:14px;
+  --font:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.5}
+a{color:#245a43}
+button{font-family:inherit}
+
+/* ---- priority ---------------------------------------------------------- */
+.priority-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;
+  font-size:11px;font-weight:850;line-height:1;letter-spacing:.02em;white-space:nowrap}
+.priority-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.priority-pill.preferred{color:var(--preferred-text);background:#f2fbf5}
+.priority-pill.alternative{color:var(--alternative-text);background:#fffaf0}
+.priority-pill.salvage{color:var(--salvage-text);background:#f3f8ff}
+.priority-pill.avoid{color:var(--avoid-text);background:#fff5f5}
+
+.priority-legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 14px;
+  padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfcfb}
+.priority-legend .legend-note{font-size:11px;color:var(--muted);line-height:1.45;flex:1 1 260px}
+
+/* ---- phase chips -------------------------------------------------------- */
+.phasebar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.phasechip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fafbfa;
+  border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700}
+.phasechip.induction{border-color:#c7d7e6;background:#f1f6fb;color:#355d7c}
+.phasechip.maintenance{border-color:#d7d4c2;background:#faf8ed;color:#75641f}
+.phasechip.salvage{border-color:#e2c8c8;background:#fbf2f2;color:#8c4141}
+.phasechip.initial{border-color:#c6d9ce;background:#f0f7f3;color:#2f6248}
+
+/* ---- provenance / references ------------------------------------------- */
+.origin-badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#edf3ef;border:1px solid #cedbd3;
+  font-size:11px;font-weight:750;white-space:nowrap}
+.locator-link{display:inline-flex;align-items:center;gap:3px;margin-left:2px;padding:1px 5px;border-radius:6px;
+  border:1px solid #c9d7cf;background:#eef5f1;color:#245a43!important;text-decoration:none;
+  font-size:11px;font-weight:800;vertical-align:baseline}
+.locator-link:hover{background:#dfeee6}
+.ref-links{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
+.ref-link{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:999px;border:1px solid #cfdad4;
+  background:#f7faf8;color:#25523e;text-decoration:none;font-size:11px;font-weight:750}
+.ref-link:hover{background:#eaf3ee}
+
+.source-panel{margin:0 0 20px;padding:16px 18px;border:1px solid #dbe3de;background:#f7faf8;border-radius:var(--radius)}
+.source-panel b{color:#234c3b}
+.source-meta{display:grid;grid-template-columns:150px 1fr;gap:7px 14px;margin-top:10px;font-size:13.5px}
+
+.page-references{margin:24px 0 8px;padding:16px 18px;border:1px solid #ccd8d1;border-radius:12px;background:#f7faf8}
+.page-ref-title{font-size:17px;font-weight:850;color:#233c31;margin-bottom:4px}
+.page-ref-sub{font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.55}
+.page-ref-list{margin:0;padding-left:22px}
+.page-ref-list li{margin:0 0 13px;line-height:1.45;font-size:12px}
+.page-ref-list li:last-child{margin-bottom:0}
+.page-ref-doi{font-family:var(--mono);font-size:11px;color:#59665f;word-break:break-all}
+.page-ref-link{display:inline-block;margin-left:7px;padding:3px 8px;border:1px solid #9fb4a8;border-radius:999px;
+  background:#fff;color:#315c49;text-decoration:none;font-size:11px;font-weight:800}
+.page-ref-link:hover{background:#edf4f0}
+
+/* ---- bibliography ------------------------------------------------------- */
+.bib-item{padding:12px 0;border-bottom:1px solid #edf0ee;line-height:1.45}
+.bib-item:last-child{border-bottom:0}
+.ref-db-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}
+.ref-db-btn{display:inline-flex;align-items:center;justify-content:center;padding:7px 11px;border-radius:9px;
+  border:1px solid #ccd8d1;background:#f7faf8;color:#214e3a;text-decoration:none;font-size:12px;font-weight:800;cursor:pointer}
+.ref-db-btn:hover{background:#e8f2ed}
+.ref-db-btn.main{background:#eaf3ee}
+.ref-db-btn.supp{background:#f4f1e8;color:#635226}
+.ref-db-btn.full{background:#eef2f8;color:#38526f}
+
+/* ---- misc --------------------------------------------------------------- */
+.badge{display:inline-block;background:#eef3f0;border-radius:999px;padding:4px 8px;font-size:11px;margin:3px 4px 0 0;color:#46554d}
+.notice{background:#fff9e9;border:1px solid #ead8a8;border-radius:var(--radius);padding:15px 18px;color:#604c1d;line-height:1.55}
+.audit-status{padding:12px 15px;border-left:4px solid var(--green);background:#f0f6f2;border-radius:8px;font-size:13px}
+.loading{padding:40px 20px;text-align:center;color:var(--muted)}
+.chart-source{font-size:13px;line-height:1.45;color:#56625b;margin-top:7px}
+.chart-disclaimer{font-size:12px;color:#7a6b55;margin-top:4px;line-height:1.45}
+.view-switch{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;
+  border-radius:999px;padding:8px 14px;font-size:13px;font-weight:750;color:#2b4a3c;text-decoration:none;cursor:pointer}
+.view-switch:hover{background:#eef4f0}
+
+@media print{
+  .no-print{display:none!important}
+  body{background:#fff}
+  tbody tr.row-preferred>td,tbody tr.row-alternative>td,tbody tr.row-salvage>td,tbody tr.row-avoid>td,
+  .tcard{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+}

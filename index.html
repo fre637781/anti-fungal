@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-Hant" data-base="./">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fungal Treatment Guideline — 抗黴菌治療指引（電腦版）</title>
+<meta name="description" content="依 ECMM/ISHAM/IDSA global guideline 整理的抗黴菌治療互動查詢：93 個菌種頁面、治療優先順序、劑量、療程與逐列 provenance。">
+<meta name="color-scheme" content="light">
+<meta property="og:title" content="Fungal Treatment Guideline">
+<meta property="og:description" content="Document-based antifungal treatment reference — 93 organism pages with per-row provenance.">
+<meta property="og:type" content="website">
+<script>
+/* Route phones to the mobile build before anything renders. An explicit choice
+   (?view= or a previous switch) always wins, so the switch link never loops. */
+(function(){
+  try{
+    var p=new URLSearchParams(location.search).get('view');
+    if(p==='desktop'||p==='mobile'){
+      localStorage.setItem('fg-view',p);
+      var clean=location.pathname+location.hash;
+      if(p==='mobile'){location.replace('m/index.html'+location.hash);return;}
+      history.replaceState(null,'',clean);return;
+    }
+    if(localStorage.getItem('fg-view')==='mobile'){location.replace('m/index.html'+location.hash);return;}
+    if(localStorage.getItem('fg-view')==='desktop')return;
+    var narrow=window.matchMedia('(max-width:760px)').matches;
+    var phone=/Android|iPhone|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if(narrow||phone)location.replace('m/index.html'+location.hash);
+  }catch(e){}
+})();
+</script>
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/desktop.css">
+</head>
+<body class="clinical-view">
+
+<header class="hero">
+  <div class="kicker" id="kicker">Document-based clinical reference</div>
+  <h1>Fungal Treatment Guideline</h1>
+  <p>依照已上傳 guideline / supplement 整理。首頁依黴菌分類與菌種瀏覽；點擊菌名後查看感染情境、治療優先順序、推薦強度與現有證據。此版本刻意保留來源文件的推薦語言，不以模型自行重排同級選項。</p>
+  <div class="hero-actions">
+    <div class="stats" id="stats"></div>
+    <a class="view-switch no-print" id="toMobile" href="m/index.html?view=mobile">📱 切換到手機版</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="toolbar no-print">
+    <input id="search" class="search" placeholder="搜尋菌名、舊菌名、感染類型或藥物…" autocomplete="off">
+    <div class="filters" id="filters"></div>
+  </div>
+
+  <div class="notice"><b>閱讀方式：</b>「1」=文件中的 preferred / first-line / strongly supported 層級；「2」=alternative 或較低推薦強度；Salvage 與 Avoid 另標示。預設為 <b>Clinical view</b>，聚焦 Priority、regimen、dose、duration、recommendation 與 sequence；需要查證時切換 <b>Audit view</b> 查看 provenance、exact locator 與 evidence notes。所有 SVG 均為 guideline-derived summary reconstruction，並非原始 guideline figure 的忠實向量重畫；正式分支與措辭以來源 Figure/Table/text 為準。Reference database 的按鈕依實際資源標示 Main article、Supplement、Open full text、PubMed 或 Publisher。</div>
+
+  <details class="audit-history"><summary><b>Audit history</b></summary>本資料庫歷經內容正確性、完整性、source provenance、逐 row source-to-content、technical integrity、population-specific completeness、visual fidelity、dose normalization 與 reference-integrity audits。V18 僅做 final interface/reference integrity 修正，不重新改寫核心 treatment evidence。</details>
+
+  <div class="evidence-filterbar no-print" id="evidenceFilter">
+    <button class="active" data-evidence-filter="all">All evidence</button>
+    <button data-evidence-filter="direct">Direct species/group evidence</button>
+    <button data-evidence-filter="extrapolation">Extrapolation only</button>
+  </div>
+
+  <div id="groups"><div class="loading">載入資料中…</div></div>
+  <div id="empty" class="empty">找不到符合條件的菌種。</div>
+
+  <section class="bibliography" id="bibliography"></section>
+
+  <section class="sources">
+    <h2>資料來源與方法</h2>
+    <ul>
+      <li>Only the uploaded documents are used. No web sources or external treatment recommendations were added.</li>
+      <li>Where a guideline gives a genus-level recommendation, the same recommendation is not presented as independent species-level evidence; species cards are labelled accordingly.</li>
+      <li>Priority reflects the source wording (preferred/first-line/alternative/salvage and SoR), not a new ranking invented for this file.</li>
+      <li>A/B/C/D in ECMM-style documents: A strongly supports, B moderately supports, C marginally supports, D recommends against. IDSA 2016 uses Strong/Weak plus evidence quality.</li>
+      <li>FUNDICU 2024 is retained as diagnostic/research context only and is not used to create treatment priorities.</li>
+    </ul>
+    <p><b>核心文件：</b> <span style="font-size:12px;color:#607068">（上方 bibliography 可直接點擊 DOI / PubMed）</span> Global guideline for rare mould infections (2021) + supplement; Global guideline for mucormycosis (2019) + supplement; Global guideline for rare yeast infections (2021) + supplement; Global guideline for endemic mycoses (2021) + supplement; Global guideline for cryptococcosis (2024) + supplement; Global guideline for candidiasis (2025) + supplement; IDSA Aspergillosis guideline (2016); ESCMID/ECMM/ERS Aspergillus guideline (2017); ESCMID/ERS chronic pulmonary aspergillosis guideline; Nature Reviews invasive candidiasis review (background evidence only); FUNDICU 2024 (diagnostic/research context only).</p>
+    <p><b>重要限制：</b>部分罕見菌只有 case reports / case series，文件本身無法提供可比較的藥物排名；此時頁面明確標示「Evidence-limited」而不自行補齊。Candida 的部分罕見 species 在 2025 文件中主要提供 taxonomy / susceptibility context，而非獨立 species-specific RCT，因此其卡片沿用 genus-level candidaemia recommendation 並要求 AFST，而不宣稱存在獨立 species-level evidence。</p>
+    <p style="font-size:12px;color:#5d6a63"><b>離線使用：</b><a href="source/Fungal_Treatment_Guideline_Interactive_v23.html" download>下載單一檔案版（V23，約 1&nbsp;MB，含所有資料與流程圖）</a>，可在沒有網路的環境直接以瀏覽器開啟。</p>
+    <p style="font-size:12px;color:#5d6a63;margin-bottom:0">本網頁僅供醫療專業人員參考，不能取代臨床判斷、當地流行病學、感染科會診或藥物仿單。用藥前請核對原始 guideline 與最新藥品資訊。</p>
+  </section>
+</main>
+
+<div id="modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="mName">
+  <div class="sheet">
+    <div id="sheetHead" class="sheet-head">
+      <button class="close no-print" id="close" aria-label="返回列表">← 返回列表</button>
+      <div class="kicker" id="mGroup"></div>
+      <h2 id="mName"></h2>
+      <p id="mAlias"></p>
+    </div>
+    <div id="mBody" class="sheet-body"></div>
+  </div>
+</div>
+
+<div id="svgviewer" class="svgviewer no-print">
+  <button class="viewer-close" id="viewerClose">關閉 ×</button>
+  <div id="svgviewerinner" class="viewer-inner"></div>
+</div>
+
+<script src="assets/js/core.js"></script>
+<script src="assets/js/desktop.js"></script>
+</body>
+</html>

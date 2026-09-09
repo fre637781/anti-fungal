@@ -1,0 +1,126 @@
+/* Mobile build — one column, no horizontal tables. Each treatment row is a card,
+   syndromes are collapsible, flowcharts open in a zoomable viewer. */
+body{background:#f2f4f2;font-size:15px;-webkit-tap-highlight-color:transparent}
+.screen{min-height:100dvh;padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+.screen[hidden]{display:none}
+
+/* ---- top bars ---------------------------------------------------------- */
+.appbar{background:linear-gradient(150deg,#173328,#315c49);color:#fff;
+  padding:calc(12px + env(safe-area-inset-top)) 14px 12px}
+.appbar h1{margin:0;font-size:19px;line-height:1.25}
+.appbar .sub{font-size:11px;opacity:.8;margin-top:3px;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
+.appbar .metrics{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:11px}
+.appbar .metrics span{background:#ffffff1f;border:1px solid #ffffff2b;border-radius:999px;padding:4px 9px}
+
+.searchbar{position:sticky;top:0;z-index:19;background:#f2f4f2f2;backdrop-filter:blur(10px);
+  padding:10px 14px 8px;border-bottom:1px solid var(--line);box-shadow:0 6px 14px #0000000a}
+.searchbar input{width:100%;padding:13px 14px;font-size:16px;border:1px solid var(--line);border-radius:12px;
+  background:#fff;outline:none}
+.searchbar input:focus{border-color:#9dbcac}
+.chiprow{display:flex;gap:7px;overflow-x:auto;padding:9px 0 3px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chiprow::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 13px;
+  font-size:13px;font-weight:650;color:#33463d;flex:0 0 auto}
+.chip.active{background:var(--deep);color:#fff;border-color:var(--deep)}
+
+.pad{padding:0 14px}
+.hint{margin:12px 0;font-size:12.5px;line-height:1.6}
+.hint details summary{font-weight:800;cursor:pointer}
+
+/* ---- organism list ----------------------------------------------------- */
+.grouphead{display:flex;gap:10px;align-items:center;margin:22px 0 9px}
+.grouphead .bar{width:5px;align-self:stretch;border-radius:9px;flex:0 0 5px}
+.grouphead h2{margin:0;font-size:16px}
+.grouphead .count{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
+.orglist{display:flex;flex-direction:column;gap:7px}
+.orgrow{display:grid;grid-template-columns:8px 1fr 14px;gap:11px;align-items:center;width:100%;text-align:left;
+  background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 13px;cursor:pointer}
+.orgrow:active{background:#eef3f0}
+.orgrow .dot{width:8px;height:8px;border-radius:50%}
+.orgrow b{display:block;font-size:14.5px;line-height:1.3}
+.orgrow small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px;line-height:1.35}
+.orgrow .meta{display:flex;gap:6px;margin-top:6px;font-size:10px;color:#6d7972;flex-wrap:wrap}
+.orgrow .meta i{font-style:normal;background:#eff3f1;border-radius:5px;padding:2px 6px}
+.orgrow .arrow{color:#9aa49f;font-size:19px;justify-self:end}
+.empty{display:none;text-align:center;color:var(--muted);padding:44px 10px}
+
+/* ---- detail ------------------------------------------------------------ */
+.detailbar{position:sticky;top:0;z-index:20;color:#fff;padding:calc(10px + env(safe-area-inset-top)) 14px 12px}
+.backbtn{border:1px solid #ffffff55;background:#ffffff1f;color:#fff;border-radius:999px;padding:7px 13px;
+  font-size:13px;font-weight:750;cursor:pointer}
+.detailbar h2{margin:9px 0 2px;font-size:20px;line-height:1.2}
+.detailbar .alias{font-size:12.5px;opacity:.86;line-height:1.4}
+.detailbar .grp{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;opacity:.8;font-weight:700;margin-top:8px}
+
+.segmented{display:flex;gap:6px;margin:12px 0}
+.segmented button{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 6px;
+  font-size:12.5px;font-weight:750;color:#35473f;cursor:pointer}
+.segmented button.active{background:#233c31;color:#fff;border-color:#233c31}
+
+.sect{background:#fff;border:1px solid var(--line);border-radius:14px;margin:12px 0;overflow:hidden}
+.sect>summary{list-style:none;cursor:pointer;padding:14px 14px;font-weight:800;font-size:14.5px;
+  display:flex;align-items:center;gap:9px}
+.sect>summary::-webkit-details-marker{display:none}
+.sect>summary::after{content:"⌄";margin-left:auto;font-size:17px;color:#8b968f;transition:transform .15s}
+.sect[open]>summary::after{transform:rotate(180deg)}
+.sect>summary .n{font-size:11px;font-weight:700;color:var(--muted);background:#eff3f1;border-radius:999px;padding:2px 8px}
+.sect .sect-body{padding:0 14px 14px}
+
+/* treatment card — the mobile replacement for a table row */
+.tcard{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;background:#fff;border-left-width:6px}
+.tcard.preferred{border-left-color:var(--preferred-edge);background:var(--preferred-bg)}
+.tcard.alternative{border-left-color:var(--alternative-edge);background:var(--alternative-bg)}
+.tcard.salvage{border-left-color:var(--salvage-edge);background:var(--salvage-bg)}
+.tcard.avoid{border-left-color:var(--avoid-edge);background:var(--avoid-bg)}
+.tcard .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.tcard .drug{font-size:16px;font-weight:850;line-height:1.25;margin:2px 0 8px}
+.tcard .raw{font-size:10.5px;color:#5c6862;opacity:.9}
+.kv{display:grid;grid-template-columns:74px 1fr;gap:5px 10px;font-size:13px;line-height:1.45}
+.kv dt{color:#54615a;font-size:11.5px;font-weight:750;padding-top:1px}
+.kv dd{margin:0}
+.kv dd.dose{font-weight:750;color:#1f3a2e}
+.tcard details{margin-top:10px;border-top:1px dashed #ffffffa8;padding-top:9px}
+.tcard details summary{font-size:12px;font-weight:800;color:#3a4a42;cursor:pointer;list-style:none}
+.tcard details summary::-webkit-details-marker{display:none}
+.tcard details summary::before{content:"＋ ";font-weight:800}
+.tcard details[open] summary::before{content:"－ "}
+.tcard details .body{margin-top:8px;font-size:12px;line-height:1.5}
+.tcard details .body .row{margin:6px 0}
+.tcard details .body .row b{display:block;font-size:10.5px;color:#54615a;text-transform:uppercase;letter-spacing:.04em}
+body.clinical-view .tcard details{display:none}
+
+.infogrid{display:grid;grid-template-columns:1fr;gap:9px;font-size:13px;line-height:1.5}
+.infogrid .k{font-size:11px;font-weight:800;color:#54615a;text-transform:uppercase;letter-spacing:.04em}
+
+/* charts */
+.chartitem{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:10px 0;background:#fff}
+.chartthumb{position:relative;width:100%;max-height:50vh;overflow:hidden;background:#f3f5f3;padding:8px;
+  cursor:zoom-in;display:block;border:0}
+.chartthumb::after{content:"🔍 點一下放大";position:absolute;left:0;right:0;bottom:0;padding:26px 0 9px;
+  font-size:12px;font-weight:800;color:#2f4a3e;
+  background:linear-gradient(180deg,#f3f5f300,#f3f5f3ee 55%,#f3f5f3)}
+.chartthumb svg{width:100%;height:auto;display:block;background:#fff;border-radius:6px}
+.chartmeta{padding:10px 12px;border-top:1px solid var(--line);font-size:11.5px;color:#57625c;line-height:1.45}
+.chartmeta .kind{font-weight:800;color:#3d4a44;display:block;margin-bottom:3px}
+.zoomhint{font-size:11px;color:var(--muted);padding:0 12px 10px}
+
+/* zoomable full-screen chart viewer */
+.viewer{position:fixed;inset:0;z-index:60;background:#0f1614;display:none;flex-direction:column}
+.viewer.open{display:flex}
+.viewer .vbar{display:flex;gap:8px;align-items:center;padding:calc(9px + env(safe-area-inset-top)) 12px 9px;
+  background:#16211d;color:#fff}
+.viewer .vbar .title{font-size:12.5px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.viewer .vbar button{border:1px solid #ffffff40;background:#ffffff1a;color:#fff;border-radius:9px;
+  min-width:40px;padding:8px 10px;font-size:14px;font-weight:800;cursor:pointer}
+.viewer .vstage{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px;background:#0f1614}
+.viewer .vstage .inner{background:#fff;border-radius:8px;padding:8px;width:900px;transform-origin:0 0}
+.viewer .vstage .inner svg{width:100%;height:auto;display:block}
+
+/* footer */
+.footer{padding:22px 14px calc(30px + env(safe-area-inset-bottom));color:var(--muted);font-size:11.5px;line-height:1.6}
+.footer .view-switch{margin:10px 0}
+.bibliography h2{font-size:16px;margin:0 0 6px}
+.source-meta{grid-template-columns:1fr}
+.source-meta>div:nth-child(odd){font-weight:800;font-size:11px;color:#54615a;text-transform:uppercase;
+  letter-spacing:.04em;margin-top:6px}
+.page-references{margin:12px 0}

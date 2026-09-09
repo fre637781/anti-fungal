@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant" data-base="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fungal Treatment Guideline — 抗黴菌治療指引（手機版）</title>
+<meta name="description" content="抗黴菌治療互動查詢手機版：93 個菌種、治療優先順序、劑量、療程與逐列 provenance。">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#1f3f33">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script>
+/* Send desktop browsers to the wide build unless the visitor chose this one. */
+(function(){
+  try{
+    var p=new URLSearchParams(location.search).get('view');
+    if(p==='desktop'||p==='mobile'){
+      localStorage.setItem('fg-view',p);
+      if(p==='desktop'){location.replace('../index.html'+location.hash);return;}
+      history.replaceState(null,'',location.pathname+location.hash);return;
+    }
+    if(localStorage.getItem('fg-view')==='desktop'){location.replace('../index.html'+location.hash);return;}
+    if(localStorage.getItem('fg-view')==='mobile')return;
+    var wide=window.matchMedia('(min-width:761px)').matches;
+    var phone=/Android|iPhone|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if(wide&&!phone)location.replace('../index.html'+location.hash);
+  }catch(e){}
+})();
+</script>
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/mobile.css">
+</head>
+<body class="clinical-view">
+
+<!-- list screen -->
+<div class="screen" id="listScreen">
+  <header class="appbar">
+    <div class="sub" id="kicker">Document-based clinical reference</div>
+    <h1>Fungal Treatment Guideline</h1>
+    <div class="metrics" id="metrics"></div>
+  </header>
+
+  <div class="searchbar">
+    <input id="search" type="search" placeholder="搜尋菌名、感染類型或藥物…" autocomplete="off" enterkeyhint="search">
+    <div class="chiprow" id="groupChips"></div>
+  </div>
+
+  <div class="pad">
+    <div class="chiprow" id="evidenceChips" style="padding-top:11px">
+      <button class="chip active" data-evidence="all">全部證據</button>
+      <button class="chip" data-evidence="direct">僅 Direct evidence</button>
+      <button class="chip" data-evidence="extrapolation">僅 Extrapolation</button>
+    </div>
+    <div class="notice hint" style="margin-top:12px">
+      <details>
+        <summary>閱讀方式（點開）</summary>
+        <p style="margin:8px 0 0">「1」=文件中的 preferred / first-line 層級；「2」=alternative 或較低推薦強度；Salvage 與 Avoid 另標示。卡片底色即代表建議層級：綠=Preferred、黃=Alternative、藍=Salvage、紅=Avoid。</p>
+        <p style="margin:8px 0 0">預設為 <b>Clinical view</b>；切換 <b>Audit view</b> 可展開每一列的 provenance、exact locator 與 evidence note。所有流程圖均為 guideline-derived summary reconstruction，正式分支與措辭以來源 Figure/Table/text 為準。</p>
+      </details>
+    </div>
+
+    <div id="list"><div class="loading">載入資料中…</div></div>
+    <div id="empty" class="empty">找不到符合條件的菌種。</div>
+
+    <details class="sect" id="bibSect" style="margin-top:22px"></details>
+  </div>
+
+  <footer class="footer pad">
+    <a class="view-switch" id="toDesktop" href="../index.html?view=desktop">🖥 切換到電腦版（完整表格）</a>
+    <p><a href="../source/Fungal_Treatment_Guideline_Interactive_v23.html" download>⬇ 下載離線單檔版（約 1 MB）</a></p>
+    <p>本網頁僅供醫療專業人員參考，不能取代臨床判斷、當地流行病學、感染科會診或藥物仿單。用藥前請核對原始 guideline 與最新藥品資訊。</p>
+    <p id="buildinfo"></p>
+  </footer>
+</div>
+
+<!-- detail screen -->
+<div class="screen" id="detailScreen" hidden>
+  <header class="detailbar" id="detailbar">
+    <button class="backbtn" id="back">← 返回</button>
+    <h2 id="dName"></h2>
+    <div class="alias" id="dAlias"></div>
+    <div class="grp" id="dGroup"></div>
+  </header>
+  <div class="pad" id="detailBody"></div>
+</div>
+
+<!-- zoomable chart viewer -->
+<div class="viewer" id="viewer">
+  <div class="vbar">
+    <span class="title" id="viewerTitle"></span>
+    <button id="zoomOut" aria-label="縮小">−</button>
+    <button id="zoomFit" aria-label="符合寬度">⤢</button>
+    <button id="zoomIn" aria-label="放大">＋</button>
+    <button id="viewerClose" aria-label="關閉">✕</button>
+  </div>
+  <div class="vstage" id="vstage"><div class="inner" id="vinner"></div></div>
+</div>
+
+<script src="../assets/js/core.js"></script>
+<script src="../assets/js/mobile.js"></script>
+</body>
+</html>
