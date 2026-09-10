@@ -50,8 +50,25 @@ data/index.json         93 筆菌種摘要（首頁清單與搜尋用）
 data/org/<id>.json      單一菌種完整內容
 data/charts/<id>.json   單一菌種的流程圖 SVG
 build/extract.py        由 source/ 的單檔 HTML 產生上述 data/
+build/overrides.py      對原始檔內容的修正層（見下）
 source/                 原始單一檔案 HTML（頁尾提供離線下載）
 ```
+
+## 修正層 build/overrides.py
+
+`source/` 的原始檔完全保持交付時的樣子（不修改），所有對內容的修正都集中寫在
+`build/overrides.py`，由 `extract.py` 在產生 `data/` 時套用。這樣每一處與原始文件
+不同的地方都能單獨被檢視與稽核，套用清單也會寫進 `data/meta.json` 的 `overrides`。
+
+目前的修正：
+
+- **cryptococcosis-algorithm** — 原始檔的 Cryptococcus 流程圖以菌種為起點，但
+  guideline 本身不是這樣分層。Chang 2024 Figure 1 的分支順序是
+  involvement（CNS / 播散 / 單獨肺部 / 皮膚接種）→ host（HIV / SOT / non-HIV non-SOT）
+  → severity，species 只在 Panel 13（C. gattii CNS 比照 C. neoformans，non-HIV 可延長
+  induction 至 4–6 週）與 Panel 15（罕見種同 C. neoformans）出現，屬於修飾因子。
+  此修正在 *C. neoformans* 與 *C. gattii* 兩頁最前面加入依 Figure 1 重建的主流程圖；
+  所有藥物、劑量、療程與 A/B/C 分級皆逐字轉錄自 Figure 1 與被引用的 Panel，未新增內容。
 
 ## 更新資料（例如日後出 V24）
 

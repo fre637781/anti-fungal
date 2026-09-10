@@ -17,6 +17,9 @@ import os
 import re
 import sys
 
+import overrides
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_SRC = os.path.join(ROOT, "source", "Fungal_Treatment_Guideline_Interactive_v23.html")
 
@@ -144,6 +147,9 @@ def main():
     data, charts = const["DATA"], const["SVG_CHARTS"]
     groups = const["GROUP_META"]
 
+    # Curated corrections layered on top of the untouched source document.
+    overrides.apply(data, charts)
+
     # Drop any stale per-organism file so a shrinking source cannot leave orphans.
     for sub in ("org", "charts"):
         d = os.path.join(ROOT, "data", sub)
@@ -195,6 +201,7 @@ def main():
             "rows": total_rows,
             "charts": total_charts,
         },
+        "overrides": overrides.APPLIED,
         "bibliography": read_bibliography(src),
         "reference_links": const["REFERENCE_LINKS"],
         "reference_database": const["REFERENCE_DATABASE"],
@@ -203,6 +210,8 @@ def main():
     meta_bytes = write_json("data/meta.json", meta)
     index_bytes = write_json("data/index.json", {"organisms": index})
 
+    for note in overrides.APPLIED:
+        print("override       %s" % note)
     print("organisms      %d" % len(data))
     print("syndrome rows  %d" % total_rows)
     print("flowcharts     %d" % total_charts)
