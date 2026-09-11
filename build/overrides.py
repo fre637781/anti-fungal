@@ -2,360 +2,43 @@
 
 The single-file HTML in source/ is left byte-for-byte as delivered, so every
 deviation from it is declared here and can be reviewed on its own. extract.py
-applies these while building data/.
+applies these while building data/, and records the applied list in meta.json.
 
 Current overrides
 -----------------
 dose-typo-dayay
-    The source file carries 98 occurrences of "mg/kg/dayay" (and similar)
-    across 35 organisms — the residue of a bad "d" -> "day" substitution when
-    the doses were normalised. These are dose strings a clinician reads, so
-    they are corrected to "/day" in both the treatment rows and the flowchart
-    SVGs that bake the same text in.
+    The source file carries "mg/kg/dayay" throughout — the residue of a bad
+    "d" -> "day" substitution when the doses were normalised. These are dose
+    strings a clinician reads, so they are corrected to "/day" in both the
+    treatment rows and the flowchart SVGs that bake the same text in.
 
 cryptococcosis-algorithm
-    The source file's Cryptococcus flowcharts open with species-level charts
-    (C. neoformans complex, then C. gattii as a separate page). The guideline
-    itself does not stratify that way: Chang 2024 Figure 1 branches
-    involvement -> host -> severity, and species enters only as a modifier
-    (Panel 13: C. gattii CNS disease is treated the same as C. neoformans,
-    with induction possibly extended to 4-6 weeks in non-HIV patients;
-    Panel 15 says the same for the rare non-neoformans/non-gattii species).
-    This override prepends a faithful reconstruction of Figure 1 to both
-    Cryptococcus pages so the host/involvement/severity logic is what a reader
-    meets first. No treatment content is invented: every node, duration and
-    grade below is transcribed from Figure 1 and the cited panels.
+    The source file's Cryptococcus flowcharts open species-first. The guideline
+    does not stratify that way: Chang 2024 Figure 1 branches involvement ->
+    host -> severity, and species enters only as a modifier (Panel 13 treats
+    C. gattii CNS disease the same as C. neoformans, with induction possibly
+    extended to 4-6 weeks in non-HIV patients; Panel 15 says the same for the
+    rare non-neoformans/non-gattii species).
+
+mucormycosis-pathway
+    The source file renders Cornely 2019 Figure 5 as a flat list of three
+    treatment rows, which drops the parts of the figure that carry the
+    decisions: the emergency framing, surgery as a co-equal first step, the
+    brain-involvement / SOT / renal-compromise modifiers, the response
+    assessment loop, and the separate progressive-disease and toxicity
+    branches — along with every "recommended against" node. Each of the three
+    drug-availability panels is rebuilt as the pathway it actually is.
+    Recommendation strengths were read off the source figure's own fill
+    colours (strong #ddedde, moderate #fff9d7, marginal #feebed,
+    against #f7dfdf), not inferred from wording.
 """
-
-SOURCE = "Chang 2024 Cryptococcosis | Figure 1 | PDF p2 (journal e496)"
-
-# ---------------------------------------------------------------- SVG helpers
-CJK = lambda ch: ord(ch) > 0x2E7F
-
-
-def esc(s):
-    return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
-
-
-def text_width(s, size):
-    """Rough advance width; CJK glyphs are full-width, Latin about 0.53em."""
-    return sum((1.0 if CJK(c) else 0.53) * size for c in s)
-
-
-def wrap(s, max_px, size):
-    words, lines, cur = s.split(" "), [], ""
-    for w in words:
-        trial = (cur + " " + w).strip()
-        if cur and text_width(trial, size) > max_px:
-            lines.append(cur)
-            cur = w
-        else:
-            cur = trial
-    if cur:
-        lines.append(cur)
-    return lines
-
-
-def rect(x, y, w, h, fill, stroke, rx=11, sw=2, extra=""):
-    return ('<rect x="%g" y="%g" width="%g" height="%g" rx="%g" fill="%s" '
-            'stroke="%s" stroke-width="%g"%s/>' % (x, y, w, h, rx, fill, stroke, sw,
-                                                   (" " + extra) if extra else ""))
-
-
-def label(x, y, s, size=14, weight="400", anchor="start", fill="#18211d", extra=""):
-    return ('<text x="%g" y="%g" font-family="Arial,Helvetica,sans-serif" font-size="%g" '
-            'font-weight="%s" text-anchor="%s" fill="%s"%s>%s</text>'
-            % (x, y, size, weight, anchor, fill, (" " + extra) if extra else "", esc(s)))
-
-
-def block(x, y, w, s, size=13, weight="400", anchor="middle", fill="#18211d", lh=None, pad=10):
-    """Centred, wrapped run of text. Returns (svg, height consumed)."""
-    lh = lh or size + 4
-    lines = wrap(s, w - 2 * pad, size)
-    tx = x + w / 2 if anchor == "middle" else x + pad
-    out = "".join(label(tx, y + i * lh, ln, size, weight, anchor, fill) for i, ln in enumerate(lines))
-    return out, len(lines) * lh
-
-
-def line(x1, y1, x2, y2, stroke="#6d7a73", sw=2):
-    return ('<line x1="%g" y1="%g" x2="%g" y2="%g" stroke="%s" stroke-width="%g" '
-            'stroke-linecap="round"/>' % (x1, y1, x2, y2, stroke, sw))
-
-
-def elbow(x1, y1, x2, y2, bus, stroke="#6d7a73", sw=2):
-    """Vertical drop to a horizontal bus, across, then down into the target."""
-    return ('<path d="M %g %g V %g H %g V %g" fill="none" stroke="%s" stroke-width="%g" '
-            'stroke-linecap="round" stroke-linejoin="round"/>' % (x1, y1, bus, x2, y2, stroke, sw))
-
-
-# tier colours — identical to the treatment-table row shading used site-wide
-TIER = {
-    "preferred":   ("#d8f0df", "#23824b", "#155b35"),
-    "alternative": ("#fff0bd", "#c58a00", "#765300"),
-    "salvage":     ("#d9eaff", "#3478bd", "#245787"),
-    "avoid":       ("#f9d6d6", "#c53b3b", "#8d2525"),
-}
-BRANCH = ("#e9eff3", "#4a6b86")   # involvement — structural, never a tier colour
-STRAT = ("#f2f5f3", "#697770")    # host / severity
-PAPER = ("#ffffff", "#c9d3cd")
-
-
-def treatment_box(x, y, w, h, tier, title, body, note=""):
-    fill, stroke, ink = TIER[tier]
-    out = [rect(x, y, w, h, fill, stroke, sw=2.5)]
-    ty = y + 26
-    t, dy = block(x, ty, w, title, 15, "800", "middle", ink)
-    out.append(t)
-    ty += dy + 6
-    b, dy = block(x, ty, w, body, 13, "400", "middle", "#1c2a24")
-    out.append(b)
-    if note:
-        ty += dy + 6
-        n, _ = block(x, ty, w, note, 11.5, "400", "middle", "#4d5a53")
-        out.append(n)
-    return "".join(out)
-
-
-def branch_box(x, y, w, h, en, zh, palette=BRANCH, size=14):
-    """Text is shrunk until it fits the box, then centred vertically, so a long
-    label such as 'Disseminated (non-CNS, non-pulmonary)' cannot spill out."""
-    fill, stroke = palette
-    zh_size = 11.5
-    while True:
-        en_lines = wrap(en, w - 14, size)
-        en_h = len(en_lines) * (size + 4)
-        zh_h = (zh_size + 4) + 4 if zh else 0
-        if en_h + zh_h <= h - 18 or size <= 10.5:
-            break
-        size -= 0.5
-        zh_size = min(zh_size, size - 1.5)
-
-    out = [rect(x, y, w, h, fill, stroke, sw=2)]
-    ty = y + (h - (en_h + zh_h)) / 2 + size
-    for ln in en_lines:
-        out.append(label(x + w / 2, ty, ln, size, "800", "middle", "#1d2a33"))
-        ty += size + 4
-    if zh:
-        out.append(label(x + w / 2, ty + 4, zh, zh_size, "700", "middle", "#5a6b76"))
-    return "".join(out)
-
-
-# ------------------------------------------------------------------ the chart
-# Ten leaves, left to right, in the order Figure 1 presents them.
-LEAF_W, LEAF_GAP, GROUP_GAP, X0 = 158, 8, 24, 52
-W, H = 1820, 1580
-
-
-def leaf_x(i):
-    """Leaf i, with wider gaps between the four involvement groups."""
-    groups_before = sum(1 for boundary in (5, 6, 9) if i >= boundary)
-    return X0 + i * (LEAF_W + LEAF_GAP) + groups_before * (GROUP_GAP - LEAF_GAP)
-
-
-def build_svg(highlight=None):
-    s = []
-    s.append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d __HEIGHT__">' % W)
-    s.append('<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>')
-
-    # header
-    s.append(rect(X0, 28, W - 2 * X0, 100, "#f2f5f3", "#596861", rx=14, sw=3))
-    s.append(label(X0 + 24, 68, "Cryptococcosis — first-line antifungal therapy by involvement, host and severity",
-                   27, "800"))
-    s.append(label(X0 + 24, 98,
-                   "分層順序：involvement（感染部位）→ host（宿主）→ severity（嚴重度）。Species 只是修飾因子，不是第一層分支。",
-                   14.5, "700", fill="#4a5a52"))
-    s.append(label(W - X0 - 24, 98, "Chang 2024 · Figure 1", 13, "700", "end", "#66716b"))
-
-    # entry
-    ex, ew, ey, eh = 610, 600, 152, 58
-    s.append(rect(ex, ey, ew, eh, "#ffffff", "#46617a", rx=12, sw=2.5))
-    t, dy = block(ex, ey + 25, ew, "Confirmed cryptococcosis — define the syndrome and extent of disease",
-                  14.5, "800", "middle", "#1d2a33")
-    s.append(t)
-    z, _ = block(ex, ey + 25 + dy + 3, ew, "先界定感染部位與播散範圍（CNS 檢查、血液 CrAg、影像）",
-                 11.5, "700", "middle", "#5a6b76")
-    s.append(z)
-
-    # ---- level 1: involvement -------------------------------------------
-    iy, ih = 248, 96
-    groups = [
-        (0, 5, "CNS cryptococcosis / cryptococcal meningitis", "CNS 侵犯"),
-        (5, 1, "Disseminated (non-CNS, non-pulmonary)", "播散性"),
-        (6, 3, "Isolated pulmonary cryptococcosis *", "單獨肺部"),
-        (9, 1, "Direct skin inoculation", "直接皮膚接種"),
-    ]
-    bus = iy - 24
-    s.append(line(ex + ew / 2, ey + eh, ex + ew / 2, bus))
-    for start, span, en, zh in groups:
-        gx = leaf_x(start)
-        gw = leaf_x(start + span - 1) + LEAF_W - gx
-        s.append(branch_box(gx, iy, gw, ih, en, zh, BRANCH, 15))
-        s.append(elbow(ex + ew / 2, bus, gx + gw / 2, iy, bus))
-
-    # ---- level 2: host / severity ---------------------------------------
-    sy, sh = 378, 96
-    strat = [
-        (0, 1, "HIV", "PLHIV"),
-        (1, 1, "SOT", "實體器官移植"),
-        (2, 1, "Non-HIV / non-SOT", "其他宿主"),
-        (3, 1, "Non-HIV + C. gattii", "species 修飾"),
-        (4, 1, "CNS cryptococcoma", "腦部團塊"),
-        (5, 1, "Treat as CNS disease", "cryptococcaemia 同 CNS"),
-        (6, 2, "Severe", "多發 / ≥2 cm / 實變 / 空洞 / 多葉 / 低氧"),
-        (8, 1, "† Mild (± cryptococcoma)", "無症狀或單一 <2 cm 結節"),
-        (9, 1, "Primary cutaneous", "無播散證據"),
-    ]
-    bus2 = sy - 22
-    for start, span, en, zh in strat:
-        bx = leaf_x(start)
-        bw = leaf_x(start + span - 1) + LEAF_W - bx
-        hl = highlight == "gattii" and start == 3
-        s.append(branch_box(bx, sy, bw, sh, en, zh, STRAT, 14))
-        if hl:
-            s.append(rect(bx - 6, sy - 6, bw + 12, sh + 12, "none", "#c58a00", rx=15, sw=3.5,
-                          extra='stroke-dasharray="7 5"'))
-        # connect from the owning involvement group
-        for gstart, gspan, _, _ in groups:
-            if gstart <= start < gstart + gspan:
-                gx = leaf_x(gstart)
-                gw = leaf_x(gstart + gspan - 1) + LEAF_W - gx
-                s.append(elbow(gx + gw / 2, iy + ih, bx + bw / 2, sy, bus2))
-                break
-
-    # ---- level 3: pulmonary severe qualifier ----------------------------
-    qy, qh = 496, 60
-    bus3 = qy - 20
-    px = leaf_x(6)
-    pw = leaf_x(7) + LEAF_W - px
-    for i, en in ((6, "Without cryptococcoma"), (7, "With cryptococcoma")):
-        bx = leaf_x(i)
-        s.append(rect(bx, qy, LEAF_W, qh, "#ffffff", "#697770", rx=10, sw=2))
-        t, _ = block(bx, qy + 25, LEAF_W, en, 12.5, "750", "middle", "#2c3a33")
-        s.append(t)
-        s.append(elbow(px + pw / 2, sy + sh, bx + LEAF_W / 2, qy, bus3))
-
-    # ---- level 4: induction ---------------------------------------------
-    ty, th = 590, 172
-    ind_x = leaf_x(0)
-    ind_w = leaf_x(7) + LEAF_W - ind_x
-    s.append(treatment_box(
-        ind_x, ty, ind_w, th, "preferred",
-        "Induction — polyene-based (all branches above)",
-        "(AIIt) ‡ Liposomal amphotericin B 3–4 mg/kg daily + flucytosine 25 mg/kg four times a day — high-income settings", ))
-    s.append(block(ind_x, ty + 92, ind_w,
-                   "or (AI) § Liposomal amphotericin B 10 mg/kg single dose + flucytosine 25 mg/kg four times a day for 2 weeks + fluconazole 1200 mg daily — low-income settings",
-                   13, "400", "middle", "#1c2a24")[0])
-    s.append(block(ind_x, ty + 138, ind_w,
-                   "‡ Strongly preferred for CNS disease in SOT and non-HIV/non-SOT, disseminated disease and severe pulmonary disease. ‡ and § have not been compared directly. § trialled only in cryptococcal meningitis.",
-                   11.5, "400", "middle", "#4d5a53")[0])
-
-    # fluconazole-only branches
-    s.append(treatment_box(leaf_x(8), ty, LEAF_W, th, "alternative", "Fluconazole",
-                           "400–800 mg daily", "Panel 6 states 400 mg daily"))
-    s.append(treatment_box(leaf_x(9), ty, LEAF_W, th, "preferred", "Fluconazole",
-                           "400 mg daily", "or until healed"))
-
-    for i in range(10):
-        top = qy + qh if i in (6, 7) else sy + sh
-        s.append(line(leaf_x(i) + LEAF_W / 2, top, leaf_x(i) + LEAF_W / 2, ty))
-
-    # ---- level 5: duration + grade ---------------------------------------
-    dy_, dh = 796, 96
-    durations = [
-        ("2 weeks", "AI", "preferred"),
-        ("≥2 weeks", "AIIt", "preferred"),
-        ("≥2 weeks", "AIIt", "preferred"),
-        ("4–6 weeks", "BIII", "alternative"),
-        ("4–6 weeks", "BIII", "alternative"),
-        ("2 weeks", "BIIu", "alternative"),
-        ("2 weeks", "AIIu", "preferred"),
-        ("4–6 weeks", "BIIu", "alternative"),
-        ("¶ 6–12 months", "BIIu", "alternative"),
-        ("3–6 months", "AIII", "preferred"),
-    ]
-    for i, (dur, grade, tier) in enumerate(durations):
-        fill, stroke, ink = TIER[tier]
-        bx = leaf_x(i)
-        s.append(line(bx + LEAF_W / 2, ty + th, bx + LEAF_W / 2, dy_))
-        s.append(rect(bx, dy_, LEAF_W, dh, fill, stroke, rx=10, sw=2))
-        s.append(block(bx, dy_ + 22, LEAF_W, "Duration", 10.5, "800", "middle", "#5c6a62")[0])
-        t, ddy = block(bx, dy_ + 46, LEAF_W, dur, 14.5, "800", "middle", ink)
-        s.append(t)
-        s.append(block(bx, dy_ + 46 + ddy + 6, LEAF_W, grade, 12.5, "800", "middle", ink)[0])
-
-    # ---- level 6: consolidation / maintenance ----------------------------
-    cy, ch = 936, 66
-    my, mh = 1032, 86
-    s.append(line(ind_x + ind_w / 2, dy_ + dh, ind_x + ind_w / 2, cy))
-    s.append(treatment_box(ind_x, cy, ind_w, ch, "preferred", "Consolidation — 8 weeks",
-                           "(AI) Fluconazole 400–800 mg daily (800 mg preferred in low-income settings)"))
-    s.append(line(ind_x + ind_w / 2, cy + ch, ind_x + ind_w / 2, my))
-    s.append(treatment_box(ind_x, my, ind_w, mh, "preferred", "Maintenance — 12 months",
-                           "(AIIt) Fluconazole 200 mg daily, or until immune restoration"))
-    s.append(block(ind_x, my + 68, ind_w,
-                   "(BIIu) In people with HIV, cease after 12 months if aviraemic on ART with CD4 >100 cells per mm³; (AIII) restart if CD4 falls below 100.",
-                   11.5, "400", "middle", "#4d5a53")[0])
-
-    # the two fluconazole branches finish with their own course
-    for i in (8, 9):
-        bx = leaf_x(i)
-        s.append(rect(bx, cy, LEAF_W, 54, "#f7f9f8", "#c9d3cd", rx=10, sw=1.5))
-        s.append(block(bx, cy + 22, LEAF_W, "No separate consolidation / maintenance phase",
-                       10.5, "700", "middle", "#5c6a62")[0])
-
-    # ---- species modifier -------------------------------------------------
-    ny, nh = 1152, 108
-    s.append(rect(X0, ny, W - 2 * X0, nh, "#fffaf0", "#c58a00", rx=13, sw=2.5))
-    s.append(label(X0 + 22, ny + 30, "Species is a modifier — not the first branch　種別只調整療程，不是第一層分支",
-                   15.5, "800", fill="#765300"))
-    s.append(label(X0 + 22, ny + 58,
-                   "C. gattii CNS disease: (AIII) treat the same as C. neoformans CNS infection; (BIII) in non-HIV patients consider extending induction to 4–6 weeks; (AIII) early CSF shunting for obstructive chronic hydrocephalus.  — Panel 13",
-                   12.5, "400", fill="#4a4030"))
-    s.append(label(X0 + 22, ny + 82,
-                   "Non-C. neoformans / non-C. gattii species (eg, Papiliotrema laurentii, Naganishia albida): (CIII) for CNS or disseminated disease, treat the same as C. neoformans CNS infection.  — Panel 15",
-                   12.5, "400", fill="#4a4030"))
-
-    # ---- footnotes --------------------------------------------------------
-    fy = 1292
-    notes = [
-        "* Isolated pulmonary cryptococcosis (C. neoformans or C. gattii): mild = asymptomatic or mildly symptomatic, or a solitary small nodule (<2 cm); severe = multiple lesions, large lesions (≥2 cm), lobar consolidation, cavitation, multi-lobar involvement, or hypoxaemia.",
-        "† If Cryptococcus spp in a respiratory specimen is judged to be airway colonisation after careful evaluation and no treatment is elected, (AIII) regular follow-up is recommended, especially before future immunosuppression.",
-        "¶ A shorter duration (eg, 3 months) can be considered in immunocompetent individuals with mild isolated pulmonary cryptococcosis.",
-        "Pulmonary disease with CNS involvement, cryptococcaemia, or a blood cryptococcal antigen titre >1:512 is treated as CNS disease (Panel 6). Cryptococcaemia: (AIIu) treat as CNS disease; all other non-CNS non-pulmonary disseminated disease: (BIIu) treat as CNS disease (Panel 7).",
-        "Node colour encodes the recommendation grade: green = A (strongly recommended), amber = B (moderately recommended), blue = C (marginally recommended), red = D (recommended against). Grades and level of evidence are transcribed from the source figure.",
-    ]
-    rendered, ny2 = [], fy + 30
-    for n in notes:
-        t, dyy = block(X0 + 20, ny2, W - 2 * X0 - 40, n, 12.5, "400", "start", "#4a5a52", lh=17, pad=0)
-        rendered.append(t)
-        ny2 += dyy + 9
-    s.append(rect(X0, fy, W - 2 * X0, ny2 - fy - 9 + 20, "#f7f9f8", "#c9d3cd", rx=13, sw=2))
-    s.extend(rendered)
-
-    height = int(ny2 - 9 + 20 + 28)
-    s.append("</svg>")
-    return "".join(s).replace("__HEIGHT__", str(height), 1)
-
-
-def chart(highlight=None):
-    return {
-        "title": "Cryptococcosis treatment algorithm — involvement → host → severity (Figure 1)",
-        "source": SOURCE,
-        "kind": "GUIDELINE-DERIVED SUMMARY SVG — RESTRUCTURED TO THE SOURCE FIGURE'S OWN BRANCHING ORDER",
-        "disclaimer": ("Reconstruction of Chang 2024 Figure 1. The branching order is the guideline's own: "
-                       "syndrome / involvement first, then host (HIV, SOT, non-HIV/non-SOT), then severity; "
-                       "species appears only as a modifier (Panel 13, Panel 15). Regimens, durations and "
-                       "grades are transcribed from Figure 1 and the cited panels — use the original "
-                       "Figure/Panel text for definitive wording."),
-        "svg": build_svg(highlight),
-        "visual_type": "guideline-derived-summary",
-        "visual_fidelity": "summary-not-source-faithful-redraw",
-        "source_has_original_figure": True,
-        "source_figure": "Figure 1 (PDF p2, journal e496)",
-    }
-
+import charts_cryptococcosis
+import charts_mucormycosis
+import charts_stratified
 
 TYPOS = [("/dayay", "/day")]
+
+APPLIED = []
 
 
 def fix_typos(data, charts):
@@ -383,21 +66,27 @@ def fix_typos(data, charts):
     return n
 
 
-APPLIED = ["cryptococcosis-algorithm — Chang 2024 Figure 1 restructured as involvement → host → severity"]
+def _bundle(charts, name):
+    bundle = charts.get(name)
+    if not bundle:
+        raise SystemExit("override target missing from source: %s" % name)
+    return bundle
 
 
 def apply(data, charts):
     """Mutates the extracted DATA / SVG_CHARTS in place."""
+    del APPLIED[:]
+
     fixed = fix_typos(data, charts)
     if fixed:
         APPLIED.append("dose-typo-dayay — %d corrupted dose strings repaired to '/day'" % fixed)
 
+    # --- cryptococcosis: involvement -> host -> severity ---------------------
     for name, hl in (("Cryptococcus neoformans species complex", None),
                      ("Cryptococcus gattii species complex", "gattii")):
-        bundle = charts.get(name)
-        if not bundle:
-            raise SystemExit("override target missing from source: %s" % name)
-        bundle["charts"].insert(0, chart(hl))
+        _bundle(charts, name)["charts"].insert(0, charts_cryptococcosis.chart(hl))
+    APPLIED.append("cryptococcosis-algorithm — Chang 2024 Figure 1 restructured as "
+                   "involvement → host → severity")
 
     for org in data:
         if org["name"].startswith("Cryptococcus ") and "species complex" in org["name"]:
@@ -405,3 +94,32 @@ def apply(data, charts):
                 "治療分層依 Chang 2024 Figure 1：involvement → host → severity；species 僅為修飾因子"
                 "（C. gattii CNS 依 Panel 13 與 C. neoformans 相同，non-HIV 可考慮 induction 延長至 4–6 週）。 "
             ) + org.get("source_note", "")
+
+    # --- mucormycosis: restore Figure 5's actual pathway ---------------------
+    bundle = _bundle(charts, "Mucorales spp. — mucormycosis")
+    rebuilt = charts_mucormycosis.charts()
+    # Replace the three flattened availability charts, keep anything else
+    # (eg the paediatric supplement chart) after them.
+    kept = [c for c in bundle["charts"] if "Figure 5" not in c["title"]]
+    bundle["charts"] = rebuilt + kept
+    APPLIED.append("mucormycosis-pathway — Cornely 2019 Figure 5A/5B/5C rebuilt as decision "
+                   "pathways with response assessment and recommended-against nodes")
+
+    # --- endemic mycoses: show the stratification the rows already carry ------
+    n = 0
+    for org in data:
+        if org.get("group") != "Endemic / dimorphic mycoses":
+            continue
+        bundle = charts.get(org["name"])
+        if not bundle:
+            continue
+        by_title = {c["title"]: c for c in bundle["charts"]}
+        for syn in org["syndromes"]:
+            original = by_title.get(syn["title"])
+            if original is None or not charts_stratified.applies_to(syn):
+                continue
+            bundle["charts"][bundle["charts"].index(original)] = \
+                charts_stratified.chart(org, syn, original)
+            n += 1
+    APPLIED.append("endemic-stratification — %d endemic charts redrawn as severity / site / phase "
+                   "pathways from the rows' own clinical-setting column" % n)
