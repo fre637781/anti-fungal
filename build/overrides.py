@@ -6,6 +6,13 @@ applies these while building data/.
 
 Current overrides
 -----------------
+dose-typo-dayay
+    The source file carries 98 occurrences of "mg/kg/dayay" (and similar)
+    across 35 organisms — the residue of a bad "d" -> "day" substitution when
+    the doses were normalised. These are dose strings a clinician reads, so
+    they are corrected to "/day" in both the treatment rows and the flowchart
+    SVGs that bake the same text in.
+
 cryptococcosis-algorithm
     The source file's Cryptococcus flowcharts open with species-level charts
     (C. neoformans complex, then C. gattii as a separate page). The guideline
@@ -348,11 +355,43 @@ def chart(highlight=None):
     }
 
 
+TYPOS = [("/dayay", "/day")]
+
+
+def fix_typos(data, charts):
+    """Repair text corruption carried in from the source document."""
+    n = 0
+
+    def fix(s):
+        nonlocal n
+        out = s
+        for bad, good in TYPOS:
+            if bad in out:
+                n += out.count(bad)
+                out = out.replace(bad, good)
+        return out
+
+    for org in data:
+        for syn in org.get("syndromes", []):
+            for row in syn.get("rows", []):
+                for i, cell in enumerate(row):
+                    if isinstance(cell, str):
+                        row[i] = fix(cell)
+    for bundle in charts.values():
+        for c in bundle.get("charts", []):
+            c["svg"] = fix(c["svg"])
+    return n
+
+
 APPLIED = ["cryptococcosis-algorithm — Chang 2024 Figure 1 restructured as involvement → host → severity"]
 
 
 def apply(data, charts):
     """Mutates the extracted DATA / SVG_CHARTS in place."""
+    fixed = fix_typos(data, charts)
+    if fixed:
+        APPLIED.append("dose-typo-dayay — %d corrupted dose strings repaired to '/day'" % fixed)
+
     for name, hl in (("Cryptococcus neoformans species complex", None),
                      ("Cryptococcus gattii species complex", "gattii")):
         bundle = charts.get(name)
