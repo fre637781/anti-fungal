@@ -20,6 +20,16 @@ cryptococcosis-algorithm
     extended to 4-6 weeks in non-HIV patients; Panel 15 says the same for the
     rare non-neoformans/non-gattii species).
 
+stratified-charts
+    The source file draws every syndrome as one flat stack of treatment nodes,
+    which hides the axis the rows are already stratified along: their own
+    clinical-setting column (severity, site or phase). 91 of 152 syndromes span
+    more than one setting, so those are redrawn as branches — as columns, or as
+    full-width bands once there are more than four settings (Aspergillus
+    chronic pulmonary aspergillosis has nine). Nothing is re-worded: each card
+    carries the row's own drug, dose, duration, grade and priority wording.
+    Charts a dedicated builder already rebuilt are left alone.
+
 mucormycosis-pathway
     The source file renders Cornely 2019 Figure 5 as a flat list of three
     treatment rows, which drops the parts of the figure that carry the
@@ -105,21 +115,21 @@ def apply(data, charts):
     APPLIED.append("mucormycosis-pathway — Cornely 2019 Figure 5A/5B/5C rebuilt as decision "
                    "pathways with response assessment and recommended-against nodes")
 
-    # --- endemic mycoses: show the stratification the rows already carry ------
+    # --- show the stratification the rows already carry, site-wide ------------
     n = 0
     for org in data:
-        if org.get("group") != "Endemic / dimorphic mycoses":
-            continue
         bundle = charts.get(org["name"])
         if not bundle:
             continue
         by_title = {c["title"]: c for c in bundle["charts"]}
         for syn in org["syndromes"]:
             original = by_title.get(syn["title"])
-            if original is None or not charts_stratified.applies_to(syn):
-                continue
+            if original is None or original.get("rebuilt"):
+                continue          # a dedicated builder already owns this chart
+            if not charts_stratified.applies_to(syn):
+                continue          # a single clinical setting stays a plain list
             bundle["charts"][bundle["charts"].index(original)] = \
                 charts_stratified.chart(org, syn, original)
             n += 1
-    APPLIED.append("endemic-stratification — %d endemic charts redrawn as severity / site / phase "
-                   "pathways from the rows' own clinical-setting column" % n)
+    APPLIED.append("stratified-charts — %d charts redrawn as severity / site / phase pathways "
+                   "from the rows' own clinical-setting column" % n)

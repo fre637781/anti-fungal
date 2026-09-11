@@ -82,11 +82,12 @@ source/                 原始單一檔案 HTML（頁尾提供離線下載）
   #f7dfdf against），不是從文字推測——因此修正了兩處誤讀：liposomal amphotericin B <5 mg/kg
   與 combination with posaconazole 都是 *marginally recommended*，不是 recommended against。
 
-- **endemic-stratification** — endemic mycoses 的治療列其實已經帶有 guideline 的
-  severity / site / phase 分層（光是 coccidioidomycosis 就有六個 clinical setting），但流程圖把
-  它們畫成一條平鋪清單。新增 `charts_stratified.py`，依每列自己的 clinical setting 欄分組成分支，
-  藥物、劑量、療程、分級與原始 priority 用語全部照原文不動。目前套用在 7 張 endemic 圖；
-  全站 152 個 syndrome 中有 91 個適用同一機制。
+- **stratified-charts** — 原始檔把每個 syndrome 都畫成一條平鋪的 treatment 清單，蓋掉了資料本身
+  已經帶有的分層軸：每一列自己的 **clinical setting 欄**（severity / site / phase）。全站 152 個
+  syndrome 中有 91 個跨越一個以上的 setting，其中 89 個改繪為分支圖（另外 2 個由 mucormycosis
+  專屬繪圖器接手）。四層以內用欄位並排；超過四層改用整列橫帶版面（Aspergillus 的 chronic
+  pulmonary aspergillosis 有九層）。內容一字未改：每張卡片的藥物、劑量、療程、QoE 與原始
+  priority 用語都是該列原文，只是重新排列。單一 setting 的 syndrome 維持原本的清單。
 
 - **cryptococcosis-algorithm** — 原始檔的 Cryptococcus 流程圖以菌種為起點，但
   guideline 本身不是這樣分層。Chang 2024 Figure 1 的分支順序是

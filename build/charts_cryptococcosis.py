@@ -3,7 +3,7 @@
 See build/overrides.py for why this replaces the source file's species-first
 opening chart on both Cryptococcus pages.
 """
-from svgkit import (BRANCH, PAPER, STRAT, TIER, block, branch_box, elbow, esc,
+from svgkit import (SVG_OPEN, BRANCH, PAPER, STRAT, TIER, block, branch_box, elbow, esc,
                     label, line, rect, treatment_box, wrap)
 
 SOURCE = "Chang 2024 Cryptococcosis | Figure 1 | PDF p2 (journal e496)"
@@ -23,7 +23,7 @@ def leaf_x(i):
 
 def build_svg(highlight=None):
     s = []
-    s.append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d __HEIGHT__">' % W)
+    s.append(SVG_OPEN % (W, "__HEIGHT__"))
     s.append('<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>')
 
     # header
@@ -217,6 +217,7 @@ def chart(highlight=None):
                        "grades are transcribed from Figure 1 and the cited panels — use the original "
                        "Figure/Panel text for definitive wording."),
         "svg": build_svg(highlight),
+        "rebuilt": "cryptococcosis-algorithm",
         "visual_type": "guideline-derived-summary",
         "visual_fidelity": "summary-not-source-faithful-redraw",
         "source_has_original_figure": True,

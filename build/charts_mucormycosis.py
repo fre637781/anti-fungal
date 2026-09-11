@@ -14,7 +14,7 @@ colours rather than inferred from the wording:
     #feebed rose   marginally recommended   -> salvage     (site blue)
     #f7dfdf salmon recommended against      -> avoid       (site red)
 """
-from svgkit import TIER, block, esc, elbow, label, line, rect, wrap
+from svgkit import SVG_OPEN, TIER, block, esc, elbow, label, line, rect, wrap
 
 W = 1820
 X0 = 52
@@ -82,7 +82,7 @@ def build_svg(panel):
     gap = 12
     cw = (W - 2 * X0 - gap * (n - 1)) / n
 
-    s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d __HEIGHT__">' % W,
+    s = [SVG_OPEN % (W, "__HEIGHT__"),
          '<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>']
 
     # header
@@ -313,7 +313,8 @@ def charts():
             "kind": "GUIDELINE-DERIVED SUMMARY SVG — REBUILT AS THE SOURCE FIGURE'S DECISION PATHWAY",
             "disclaimer": DISCLAIMER,
             "svg": build_svg(p),
-            "visual_type": "guideline-derived-summary",
+            "rebuilt": "mucormycosis-pathway",
+        "visual_type": "guideline-derived-summary",
             "visual_fidelity": "summary-not-source-faithful-redraw",
             "source_has_original_figure": True,
             "source_figure": p["figure"],

@@ -36,10 +36,22 @@ def rect(x, y, w, h, fill, stroke, rx=11, sw=2, extra=""):
                                                    (" " + extra) if extra else ""))
 
 
+# The font family is set once on the <svg> root (see SVG_OPEN) instead of on
+# every text node — these charts carry thousands of them.
+SVG_OPEN = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %s %s" '
+            'font-family="Arial,Helvetica,sans-serif">')
+
+
 def label(x, y, s, size=14, weight="400", anchor="start", fill="#18211d", extra=""):
-    return ('<text x="%g" y="%g" font-family="Arial,Helvetica,sans-serif" font-size="%g" '
-            'font-weight="%s" text-anchor="%s" fill="%s"%s>%s</text>'
-            % (x, y, size, weight, anchor, fill, (" " + extra) if extra else "", esc(s)))
+    attrs = '<text x="%g" y="%g" font-size="%g"' % (x, y, size)
+    if weight != "400":
+        attrs += ' font-weight="%s"' % weight
+    if anchor != "start":
+        attrs += ' text-anchor="%s"' % anchor
+    attrs += ' fill="%s"' % fill
+    if extra:
+        attrs += " " + extra
+    return attrs + ">%s</text>" % esc(s)
 
 
 def block(x, y, w, s, size=13, weight="400", anchor="middle", fill="#18211d", lh=None, pad=10):

@@ -11,7 +11,7 @@ Nothing here is re-worded. Each option box is the row's own drug, dose,
 duration and recommendation grade; the columns are the row's own clinical
 setting. It is a re-arrangement of existing, source-located content.
 """
-from svgkit import TIER, block, elbow, label, line, rect, wrap
+from svgkit import SVG_OPEN, TIER, block, elbow, label, line, rect, wrap
 
 W = 1820
 X0 = 52
@@ -80,25 +80,16 @@ def _option(x, y, w, row):
     return "".join(out), y + h
 
 
-def build_svg(org_name, syndrome):
-    rows = syndrome["rows"]
-    strata = []
-    for r in rows:
-        if r[5] not in strata:
-            strata.append(r[5])
-    n = len(strata)
-    gap = 12
-    cw = (W - 2 * X0 - gap * (n - 1)) / n
+MAX_COLUMNS = 4          # beyond this, columns get too narrow to read
+BAND_LABEL_W = 300
+OPTION_MIN_W = 330
 
-    s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d __HEIGHT__">' % W,
-         '<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>']
 
-    s.append(rect(X0, 28, W - 2 * X0, 100, "#f2f5f3", "#596861", rx=14, sw=3))
-    s.append(label(X0 + 24, 66, org_name, 26, "800"))
-    s.append(label(X0 + 24, 96, syndrome["title"], 15, "700", fill="#4a5a52"))
-    s.append(label(W - X0 - 24, 96, "依 clinical setting 分層", 13, "700", "end", "#66716b"))
-
-    # tier legend
+def _header(org_name, syndrome, subtitle):
+    s = [rect(X0, 28, W - 2 * X0, 100, "#f2f5f3", "#596861", rx=14, sw=3),
+         label(X0 + 24, 66, org_name, 26, "800"),
+         label(X0 + 24, 96, syndrome["title"], 15, "700", fill="#4a5a52"),
+         label(W - X0 - 24, 96, subtitle, 13, "700", "end", "#66716b")]
     ly = 146
     s.append(rect(X0, ly, W - 2 * X0, 46, "#ffffff", "#c9d3cd", rx=11, sw=1.5))
     lx = X0 + 16
@@ -107,8 +98,105 @@ def build_svg(org_name, syndrome):
         s.append(rect(lx, ly + 13, 20, 20, fill, stroke, rx=5, sw=2))
         s.append(label(lx + 27, ly + 28, LABEL[key], 12, "800", fill=ink))
         lx += 27 + len(LABEL[key]) * 8 + 30
-    s.append(label(W - X0 - 16, ly + 28, "底色 = 治療建議層級；欄位 = 來源表格的 clinical setting 欄",
+    s.append(label(W - X0 - 16, ly + 28, "底色 = 治療建議層級；分層 = 來源表格的 clinical setting 欄",
                    11.5, "700", "end", "#66716b"))
+    return "".join(s)
+
+
+def _footnote(s, ny):
+    notes = [
+        "分層（白框）直接取自來源表格的 clinical setting 欄，不是重新歸納的分類；每張卡片的藥物、劑量、療程與 "
+        "recommendation/QoE 皆為該列原文。逐列 exact locator 請在 Audit view 查看。",
+        "底色為治療建議層級：綠=Preferred、黃=Alternative、藍=Salvage、紅=Avoid。",
+    ]
+    rendered, ty = [], ny + 28
+    for nt in notes:
+        t, dy = block(X0 + 20, ty, W - 2 * X0 - 40, nt, 12.5, "400", "start", "#4a5a52", lh=17, pad=0)
+        rendered.append(t)
+        ty += dy + 9
+    s.append(rect(X0, ny, W - 2 * X0, ty - ny - 9 + 20, "#f7f9f8", "#c9d3cd", rx=13, sw=2))
+    s.extend(rendered)
+    return int(ty - 9 + 20 + 28)
+
+
+def _build_bands(org_name, syndrome, strata, rows):
+    """One full-width band per stratum: label on the left, options to the right.
+
+    Used when there are too many strata for readable columns — Aspergillus
+    chronic pulmonary aspergillosis alone has nine.
+    """
+    s = [SVG_OPEN % (W, "__HEIGHT__"),
+         '<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>',
+         _header(org_name, syndrome, "依 clinical setting 分層（%d 層）" % len(strata))]
+
+    ey, eh = 212, 54
+    s.append(rect(X0, ey, 640, eh, STEP[0], STEP[1], rx=11, sw=2.5))
+    s.append(block(X0, ey + 32, 640, "確立診斷後，先判斷屬於哪一個 clinical setting",
+                   15, "800", "middle", "#2c3a33")[0])
+
+    spine = X0 + 26
+    ox = X0 + 30 + BAND_LABEL_W + 18
+    avail = W - X0 - ox
+    y = ey + eh + 30
+    centres = []
+    for st in strata:
+        opts = [r for r in rows if r[5] == st]
+        per_row = max(1, int(avail // OPTION_MIN_W))
+        # A band with fewer options than fit gets wider cards rather than a
+        # half-empty row, but not so wide that the bands look ragged.
+        used = min(len(opts), per_row)
+        ow = min((avail - (used - 1) * 12) / used, OPTION_MIN_W * 2)
+        per_row = used
+
+        lab_lines = wrap(st, BAND_LABEL_W - 24, 13)
+        lab_h = max(52, len(lab_lines) * 17 + 26)
+
+        # lay the options out in a wrapped grid, tracking each grid row's height
+        oy, row_h, placed = y, 0, []
+        for i, r in enumerate(opts):
+            col = i % per_row
+            if col == 0 and i:
+                oy += row_h + 9
+                row_h = 0
+            placed.append((X0 + 30 + BAND_LABEL_W + 18 + col * (ow + 12), oy, r))
+            row_h = max(row_h, _option_height(r, ow))
+        band_h = max(lab_h, (oy + row_h) - y)
+
+        s.append(rect(X0 + 30, y, BAND_LABEL_W, band_h, COND[0], COND[1], rx=10, sw=2.5))
+        ty = y + (band_h - len(lab_lines) * 17) / 2 + 13
+        for ln in lab_lines:
+            s.append(label(X0 + 30 + BAND_LABEL_W / 2, ty, ln, 13, "800", "middle", "#2c3a33"))
+            ty += 17
+        for ox_, oy_, r in placed:
+            s.append(_option(ox_, oy_, ow, r)[0])
+
+        cy = y + band_h / 2
+        centres.append(cy)
+        s.append(line(spine, cy, X0 + 30, cy))
+        y += band_h + 16
+
+    s.append(line(spine, ey + eh, spine, centres[-1]))
+    height = _footnote(s, y + 20)
+    s.append("</svg>")
+    return "".join(s).replace("__HEIGHT__", str(height), 1)
+
+
+def build_svg(org_name, syndrome):
+    rows = syndrome["rows"]
+    strata = []
+    for r in rows:
+        if r[5] not in strata:
+            strata.append(r[5])
+    if len(strata) > MAX_COLUMNS:
+        return _build_bands(org_name, syndrome, strata, rows)
+    n = len(strata)
+    gap = 12
+    cw = (W - 2 * X0 - gap * (n - 1)) / n
+
+    s = [SVG_OPEN % (W, "__HEIGHT__"),
+         '<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>']
+
+    s.append(_header(org_name, syndrome, "依 clinical setting 分層（%d 層）" % n))
 
     # entry
     ey, eh = 212, 54
@@ -140,22 +228,7 @@ def build_svg(org_name, syndrome):
             oy += 9
         bottoms.append(oy - 9)
 
-    # footnote
-    ny = max(bottoms) + 36
-    notes = [
-        "欄位（白框）直接取自來源表格的 clinical setting 欄，不是重新歸納的分類；每張卡片的藥物、劑量、療程與 "
-        "recommendation/QoE 皆為該列原文。逐列 exact locator 請在 Audit view 查看。",
-        "底色為治療建議層級：綠=Preferred、黃=Alternative、藍=Salvage、紅=Avoid。",
-    ]
-    rendered, ty = [], ny + 28
-    for nt in notes:
-        t, dy = block(X0 + 20, ty, W - 2 * X0 - 40, nt, 12.5, "400", "start", "#4a5a52", lh=17, pad=0)
-        rendered.append(t)
-        ty += dy + 9
-    s.append(rect(X0, ny, W - 2 * X0, ty - ny - 9 + 20, "#f7f9f8", "#c9d3cd", rx=13, sw=2))
-    s.extend(rendered)
-
-    height = int(ty - 9 + 20 + 28)
+    height = _footnote(s, max(bottoms) + 36)
     s.append("</svg>")
     return "".join(s).replace("__HEIGHT__", str(height), 1)
 
@@ -170,6 +243,7 @@ def chart(org, syndrome, original):
                        "setting each row already carries (severity, site or phase) instead of a "
                        "single flat list. Wording, doses, durations and grades are unchanged; use "
                        "the cited original Figure/Table/text for definitive guidance."),
+        "rebuilt": "stratified",
         "svg": build_svg(org["name"], syndrome),
         "visual_type": "guideline-derived-summary",
         "visual_fidelity": "summary-not-source-faithful-redraw",
