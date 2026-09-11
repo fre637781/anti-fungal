@@ -52,6 +52,21 @@
       }).join('');
   }
 
+  /* The guidelines are written per syndrome, so offer that entry alongside the
+     species cards rather than making the reader guess a species first. */
+  function syndromeEntryHtml(group) {
+    var hubId = (state.meta.hubs || {})[group.name];
+    if (!hubId) return '';
+    var hub = state.index.filter(function (o) { return o.id === hubId; })[0];
+    if (!hub || !hub.families || hub.families.length < 2) return '';
+    return '<div class="syndrome-entry">' +
+      '<div class="se-head">依感染情境查詢（syndrome）<span>治療路徑以感染部位／情境分層；菌種主要影響感受性判讀</span></div>' +
+      '<div class="se-chips">' + hub.families.map(function (f) {
+        return '<button class="se-chip" data-syn="' + esc(hub.id) + ':' + f.index + '">' +
+          esc(f.label) + (f.variants > 1 ? '<i>' + f.variants + '</i>' : '') + '</button>';
+      }).join('') + '</div></div>';
+  }
+
   function renderLanding() {
     el.groups.innerHTML = state.meta.groups.map(function (g) {
       var orgs = state.index.filter(function (o) { return o.group === g.name; });
@@ -59,6 +74,7 @@
       return '<section class="group-block" data-group="' + esc(g.name) + '">' +
         '<div class="group-title"><span class="bar" style="background:' + esc(g.color) + '"></span>' +
         '<div><h2>' + esc(g.name) + '</h2><p>' + esc(g.desc) + '</p></div></div>' +
+        syndromeEntryHtml(g) +
         '<div class="card-grid">' + orgs.map(function (o) {
           return '<button class="organism-card" data-open="' + esc(o.id) + '" data-evidence="' + esc(o.evidence) + '">' +
             '<span class="dot" style="background:' + esc(g.color) + '"></span>' +
@@ -130,7 +146,15 @@
       }).join('') + '</tbody></table></div></div>';
   }
 
-  function syndromeHtml(s) {
+  function syndromeIndexHtml(o) {
+    if (!o.isHub || o.syndromes.length < 4) return '';
+    return '<div class="syn-index"><b>感染情境索引</b>' +
+      o.syndromes.map(function (syn, i) {
+        return '<a href="' + FG.hashFor(o.id, i) + '" data-syn-jump="' + i + '">' + esc(syn.title) + '</a>';
+      }).join('') + '</div>';
+  }
+
+  function syndromeHtml(s, i) {
     var phases = [];
     s.rows.forEach(function (r) { if (phases.indexOf(r[1]) < 0) phases.push(r[1]); });
     var rows = s.rows.filter(rowVisible);
@@ -138,7 +162,7 @@
     var head = ['Priority', 'Phase', 'Drug / regimen', 'Dose', 'Duration', 'Clinical setting', 'Recommendation / QoE'];
     var auditHead = ['Evidence origin', 'Recommendation origin', 'Dose origin', 'Duration origin', 'Source / exact locator'];
 
-    return '<section class="syndrome"><h3>' + esc(s.title) + '</h3>' +
+    return '<section class="syndrome" id="syn-' + i + '"><h3>' + esc(s.title) + '</h3>' +
       '<div class="phasebar">' + phases.map(function (p) {
         return '<span class="phasechip ' + FG.phaseClass(p) + '">' + esc(p) + '</span>';
       }).join('') + '</div>' + legendHtml() +
@@ -214,22 +238,30 @@
       '</div>' +
       '<div class="audit-status"><b>Audit status:</b> evidence-origin classified. DIRECT-only mode hides extrapolated and label-derived rows.</div>' +
       '<div class="audit-controls no-print"><button class="audit-toggle' + (state.directOnly ? ' active' : '') + '" id="directOnlyBtn">Direct guideline evidence only</button></div>' +
+      FG.hubBannerHtml(o, state.index) + syndromeIndexHtml(o) +
       comparisonHtml(o) + chartsHtml(charts) +
       o.syndromes.map(syndromeHtml).join('') +
       pageReferenceHtml(o);
   }
 
-  function openOrg(id) {
-    if (state.org && state.org.id === id) return;
+  function scrollToSyndrome(n) {
+    if (n == null) return;
+    var el = document.getElementById('syn-' + n);
+    if (el) el.scrollIntoView({ block: 'start' });
+  }
+
+  function openOrg(id, syn) {
+    if (state.org && state.org.id === id) { scrollToSyndrome(syn); return; }
     el.body.innerHTML = '<div class="loading">載入中…</div>';
     el.modal.classList.add('open');
     el.modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
 
     Promise.all([FG.loadOrg(id), FG.loadCharts(id)]).then(function (res) {
-      if (location.hash.slice(1) !== id) return;
+      if (FG.parseHash().id !== id) return;
       renderOrg(res[0], res[1]);
       el.modal.scrollTop = 0;
+      scrollToSyndrome(syn);
     }).catch(function (err) {
       el.body.innerHTML = '<div class="loading">載入失敗：' + esc(err.message) + '</div>';
     });
@@ -246,8 +278,8 @@
   /* The hash is the single source of truth, so the browser back button closes
      the sheet instead of leaving the site. */
   function route() {
-    var id = location.hash.slice(1);
-    if (id && state.index.some(function (o) { return o.id === id; })) openOrg(id);
+    var h = FG.parseHash();
+    if (h.id && state.index.some(function (o) { return o.id === h.id; })) openOrg(h.id, h.syn);
     else closeOrg();
   }
 
@@ -272,6 +304,8 @@
   });
 
   el.groups.addEventListener('click', function (e) {
+    var chip = e.target.closest('[data-syn]');
+    if (chip) { location.hash = '#' + chip.dataset.syn; return; }
     var card = e.target.closest('[data-open]');
     if (card) location.hash = card.dataset.open;
   });

@@ -144,3 +144,29 @@ tbody tr.row-avoid:hover>td{background:#f1c3c3}
   .table-wrap{overflow:visible}
   table{min-width:0}
 }
+
+/* ---- syndrome-first entry ------------------------------------------------
+   The guidelines are written per syndrome; these give that route equal
+   standing with the species cards. */
+.syndrome-entry{margin:0 0 14px;padding:14px 16px;border:1px solid #cfdad4;border-radius:14px;background:#f6faf8}
+.se-head{font-size:14px;font-weight:850;color:#234c3b;margin-bottom:10px}
+.se-head span{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-top:3px}
+.se-chips{display:flex;flex-wrap:wrap;gap:7px}
+.se-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #c2d2c9;background:#fff;border-radius:999px;
+  padding:7px 12px;font-size:12.5px;font-weight:750;color:#25523e;cursor:pointer}
+.se-chip:hover{background:#eaf3ee;border-color:#9fb4a8}
+.se-chip i{font-style:normal;font-size:10px;font-weight:800;background:#eef3f0;border-radius:999px;padding:1px 6px;color:#5c6a62}
+
+.hub-banner{margin:0 0 18px;padding:15px 18px;border:1px solid #d8c79a;border-radius:14px;background:#fffaf0}
+.hb-title{font-size:15px;font-weight:850;color:#765300}
+.hub-banner p{margin:6px 0 10px;font-size:13px;line-height:1.55;color:#4a4030}
+.hb-link{display:inline-block;padding:8px 14px;border-radius:999px;background:#233c31;color:#fff;
+  text-decoration:none;font-size:13px;font-weight:800}
+.hb-link:hover{background:#2e5142}
+
+.syn-index{margin:0 0 20px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fbfcfb}
+.syn-index b{display:block;margin-bottom:9px;font-size:13px;color:#233c31}
+.syn-index a{display:inline-block;margin:0 7px 7px 0;padding:6px 11px;border:1px solid var(--line);border-radius:999px;
+  background:#fff;font-size:12px;font-weight:700;color:#2b4a3c;text-decoration:none}
+.syn-index a:hover{background:#eef4f0}
+.syndrome{scroll-margin-top:20px}

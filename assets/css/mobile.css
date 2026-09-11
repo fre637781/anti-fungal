@@ -131,3 +131,21 @@ body.clinical-view .tcard details{display:none}
 .source-meta>div:nth-child(odd){font-weight:800;font-size:11px;color:#54615a;text-transform:uppercase;
   letter-spacing:.04em;margin-top:6px}
 .page-references{margin:12px 0}
+
+/* ---- syndrome-first entry ----------------------------------------------- */
+.syndrome-entry{margin:10px 0 12px;padding:12px 13px;border:1px solid #cfdad4;border-radius:13px;background:#f6faf8}
+.se-head{font-size:13px;font-weight:850;color:#234c3b}
+.se-head span{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-top:3px;line-height:1.45}
+.se-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.se-chip{display:inline-flex;align-items:center;gap:5px;border:1px solid #c2d2c9;background:#fff;border-radius:999px;
+  padding:8px 12px;font-size:12.5px;font-weight:750;color:#25523e}
+.se-chip i{font-style:normal;font-size:10px;font-weight:800;background:#eef3f0;border-radius:999px;padding:1px 5px;color:#5c6a62}
+
+.hub-banner{margin:12px 0;padding:13px 14px;border:1px solid #d8c79a;border-radius:13px;background:#fffaf0}
+.hb-title{font-size:14px;font-weight:850;color:#765300}
+.hub-banner p{margin:6px 0 10px;font-size:12.5px;line-height:1.55;color:#4a4030}
+.hb-link{display:block;text-align:center;padding:11px 14px;border-radius:11px;background:#233c31;color:#fff!important;
+  text-decoration:none;font-size:13px;font-weight:800}
+.se-chips.collapsed .se-chip:nth-child(n+7){display:none}
+.se-more{margin-top:9px;width:100%;border:1px dashed #b5c6bc;background:#fff;border-radius:10px;
+  padding:9px;font-size:12.5px;font-weight:750;color:#35604a}

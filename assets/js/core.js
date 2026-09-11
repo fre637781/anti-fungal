@@ -151,6 +151,41 @@
     });
   }
 
+  /* ---- hash routing --------------------------------------------------------
+     "#g7o0" opens an organism; "#g7o0:6" also jumps to its 7th syndrome, which
+     is how the landing page's syndrome chips link straight to a condition. */
+  function parseHash() {
+    var raw = location.hash.slice(1);
+    if (!raw) return { id: '', syn: null };
+    var bits = raw.split(':');
+    var syn = bits.length > 1 ? parseInt(bits[1], 10) : NaN;
+    return { id: bits[0], syn: isNaN(syn) ? null : syn };
+  }
+
+  function hashFor(id, syn) {
+    return '#' + id + (syn == null ? '' : ':' + syn);
+  }
+
+  /* ---- genus hubs ----------------------------------------------------------
+     Guideline figures are written per syndrome, so a species page that only
+     inherits genus-level recommendations should point at the hub that carries
+     them. */
+  function hubBannerHtml(org, index) {
+    if (!org.hub) return '';
+    var hub = index.filter(function (o) { return o.id === org.hub; })[0];
+    if (!hub) return '';
+    var extrapolated = (org.evidence_availability || '') === 'extrapolation';
+    return '<div class="hub-banner">' +
+      '<div class="hb-title">' + (extrapolated
+        ? '此頁沿用 genus-level 建議（extrapolation）'
+        : '治療依感染情境（syndrome）分層') + '</div>' +
+      '<p>' + (extrapolated
+        ? '本頁的治療列是從屬層級建議延伸而來，不代表存在獨立的 species-level 證據。實際治療決策請先選感染情境，species 主要影響感受性判讀與降階選擇。'
+        : '完整的感染情境清單與各情境的治療路徑集中在下列頁面。') + '</p>' +
+      '<a class="hb-link" href="' + hashFor(hub.id, null) + '">' + esc(hub.name) + ' — 依 syndrome 查詢 →</a>' +
+      '</div>';
+  }
+
   /* ---- desktop / mobile switching ------------------------------------------ */
   var VIEW_KEY = 'fg-view';
 
@@ -202,6 +237,9 @@
     loadCharts: loadCharts,
     setMeta: setMeta,
     esc: esc,
+    parseHash: parseHash,
+    hashFor: hashFor,
+    hubBannerHtml: hubBannerHtml,
     priorityClass: priorityClass,
     priorityLabel: priorityLabel,
     phaseClass: phaseClass,

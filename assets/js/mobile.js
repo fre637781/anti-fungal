@@ -59,6 +59,26 @@
       }).join('') + '</div>';
   }
 
+  /* Guidelines are written per syndrome; give that route equal standing with
+     the species list instead of making the reader guess a species first. */
+  function syndromeEntryHtml(group) {
+    if (state.query.trim() || state.evidence !== 'all') return '';
+    var hubId = (state.meta.hubs || {})[group.name];
+    if (!hubId) return '';
+    var hub = state.index.filter(function (o) { return o.id === hubId; })[0];
+    if (!hub || !hub.families || hub.families.length < 2) return '';
+    var many = hub.families.length > 6;
+    return '<div class="syndrome-entry">' +
+      '<div class="se-head">依感染情境查詢（syndrome）' +
+      '<span>治療路徑以感染部位／情境分層；菌種主要影響感受性判讀</span></div>' +
+      '<div class="se-chips' + (many ? ' collapsed' : '') + '">' + hub.families.map(function (f) {
+        return '<button class="se-chip" data-syn="' + esc(hub.id) + ':' + f.index + '">' +
+          esc(f.label) + (f.variants > 1 ? '<i>' + f.variants + '</i>' : '') + '</button>';
+      }).join('') + '</div>' +
+      (many ? '<button class="se-more" data-se-more>顯示全部 ' + hub.families.length + ' 項 ▾</button>' : '') +
+      '</div>';
+  }
+
   function renderList() {
     var q = state.query.trim().toLowerCase();
     var html = '', visible = 0;
@@ -75,6 +95,7 @@
 
       html += '<div class="grouphead"><span class="bar" style="background:' + esc(g.color) + '"></span>' +
         '<h2>' + esc(g.name) + '</h2><span class="count">' + orgs.length + '</span></div>' +
+        syndromeEntryHtml(g) +
         '<div class="orglist">' + orgs.map(function (o) {
           return '<button class="orgrow" data-open="' + esc(o.id) + '">' +
             '<span class="dot" style="background:' + esc(g.color) + '"></span>' +
@@ -125,11 +146,11 @@
       '</div></details></div>';
   }
 
-  function syndromeSection(s, openFirst) {
+  function syndromeSection(s, openFirst, idx) {
     var rows = s.rows.filter(rowVisible);
     var phases = [];
     s.rows.forEach(function (r) { if (phases.indexOf(r[1]) < 0) phases.push(r[1]); });
-    return '<details class="sect"' + (openFirst ? ' open' : '') + '>' +
+    return '<details class="sect" id="syn-' + idx + '"' + (openFirst ? ' open' : '') + '>' +
       '<summary>' + esc(s.title) + '<span class="n">' + rows.length + '</span></summary>' +
       '<div class="sect-body">' +
         '<div class="phasebar">' + phases.map(function (p) {
@@ -219,8 +240,11 @@
         '<button data-view="audit"' + (document.body.classList.contains('clinical-view') ? '' : ' class="active"') + '>Audit view</button>' +
       '</div>' +
       '<div class="segmented"><button data-direct="1"' + (state.directOnly ? ' class="active"' : '') + '>僅 Direct guideline evidence</button></div>' +
+      FG.hubBannerHtml(o, state.index) +
       infoSection(o) + comparisonSection(o) + chartsSection(state.chartCount) +
-      o.syndromes.map(function (s, i) { return syndromeSection(s, i === 0 && o.syndromes.length <= 6); }).join('') +
+      o.syndromes.map(function (s, i) {
+        return syndromeSection(s, i === 0 && o.syndromes.length <= 6, i);
+      }).join('') +
       pageReferenceSection(o) +
       '<p class="footer" style="padding-left:0;padding-right:0">資料僅供醫療專業人員參考，不能取代臨床判斷與原始 guideline。</p>';
 
@@ -242,7 +266,15 @@
     }
   }
 
-  function showDetail(id) {
+  function revealSyndrome(n) {
+    if (n == null) return;
+    var el = document.getElementById('syn-' + n);
+    if (!el) return;
+    el.open = true;
+    el.scrollIntoView({ block: 'start' });
+  }
+
+  function showDetail(id, syn) {
     el.listScreen.hidden = true;
     el.detailScreen.hidden = false;
     el.detailBody.innerHTML = '<div class="loading">載入中…</div>';
@@ -260,11 +292,12 @@
     }
 
     FG.loadOrg(id).then(function (o) {
-      if (location.hash.slice(1) !== id) return;
+      if (FG.parseHash().id !== id) return;
       state.charts = null;
       state.chartCount = summary ? summary.charts : 0;
       renderOrg(o);
       window.scrollTo(0, 0);
+      revealSyndrome(syn);
     }).catch(function (err) {
       el.detailBody.innerHTML = '<div class="loading">載入失敗：' + esc(err.message) + '</div>';
     });
@@ -279,8 +312,8 @@
 
   /* ---- hash router (keeps the Android back button working) ---------------- */
   function route() {
-    var id = location.hash.slice(1);
-    if (id && state.index.some(function (o) { return o.id === id; })) showDetail(id);
+    var h = FG.parseHash();
+    if (h.id && state.index.some(function (o) { return o.id === h.id; })) showDetail(h.id, h.syn);
     else showList();
   }
   window.addEventListener('hashchange', route);
@@ -339,6 +372,14 @@
   });
 
   el.list.addEventListener('click', function (e) {
+    var more = e.target.closest('[data-se-more]');
+    if (more) {
+      more.previousElementSibling.classList.remove('collapsed');
+      more.remove();
+      return;
+    }
+    var chip = e.target.closest('[data-syn]');
+    if (chip) { location.hash = '#' + chip.dataset.syn; return; }
     var row = e.target.closest('[data-open]');
     if (row) location.hash = row.dataset.open;
   });

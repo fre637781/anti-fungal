@@ -124,6 +124,45 @@ def search_blob(org):
     return " ".join(words)
 
 
+FAMILY_SPLIT = re.compile(r"\s+[—–-]\s+")
+
+
+def syndrome_families(org):
+    """Group a page's syndromes by the condition they treat.
+
+    A hub page lists the same syndrome several times, once per drug-availability
+    scenario ("Candidaemia — echinocandins unavailable (Figure 12)"). Readers
+    pick the condition first, so collapse those variants into one entry that
+    points at the first syndrome of the family.
+    """
+    families = []
+    seen = {}
+    for i, syn in enumerate(org.get("syndromes", [])):
+        base = FAMILY_SPLIT.split(syn["title"])[0].strip()
+        base = re.sub(r"\s+in adults$", "", base, flags=re.I).strip()
+        if base in seen:
+            families[seen[base]]["variants"] += 1
+            continue
+        seen[base] = len(families)
+        families.append({"label": base, "index": i, "variants": 1})
+    return families
+
+
+def pick_hubs(data):
+    """The organism in each group that carries the genus/syndrome-level guidance.
+
+    Species pages in these groups mostly inherit those recommendations, so the
+    hub is what a reader browsing by condition actually wants.
+    """
+    best = {}
+    for org in data:
+        n = len(org.get("syndromes", []))
+        cur = best.get(org["group"])
+        if cur is None or n > cur[1]:
+            best[org["group"]] = (org["id"], n)
+    return {g: oid for g, (oid, n) in best.items() if n >= 3}
+
+
 def write_json(rel_path, payload, compact=True):
     path = os.path.join(ROOT, rel_path)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -150,6 +189,8 @@ def main():
     # Curated corrections layered on top of the untouched source document.
     overrides.apply(data, charts)
 
+    hubs = pick_hubs(data)
+
     # Drop any stale per-organism file so a shrinking source cannot leave orphans.
     for sub in ("org", "charts"):
         d = os.path.join(ROOT, "data", sub)
@@ -166,6 +207,11 @@ def main():
         total_rows += rows
         total_charts += len(chart_list)
 
+        hub_id = hubs.get(org["group"])
+        if hub_id and hub_id != org["id"]:
+            org["hub"] = hub_id
+        elif hub_id == org["id"]:
+            org["isHub"] = True
         org_bytes += write_json("data/org/%s.json" % org["id"], org)
         if chart_list:
             chart_bytes += write_json("data/charts/%s.json" % org["id"], {"charts": chart_list})
@@ -186,6 +232,11 @@ def main():
                 "q": search_blob(org),
             }
         )
+        if org.get("isHub"):
+            index[-1]["isHub"] = True
+            index[-1]["families"] = syndrome_families(org)
+        elif org.get("hub"):
+            index[-1]["hub"] = org["hub"]
 
     meta = {
         "version": "V23",
@@ -195,6 +246,7 @@ def main():
         "source_sha256": hashlib.sha256(open(src, "rb").read()).hexdigest()[:16],
         "columns": COL,
         "groups": groups,
+        "hubs": hubs,
         "stats": {
             "organisms": len(data),
             "groups": len(groups),

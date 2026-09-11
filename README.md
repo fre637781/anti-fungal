@@ -18,7 +18,15 @@
 使用者自行切換後會記在 `localStorage`，之後不再自動導向。
 也可以直接用 `?view=desktop` 或 `?view=mobile` 指定版本。
 
-菌種頁面可用網址錨點直接分享，例如 `/#g0o0`（Aspergillus spp.）、`/m/#g6o0`（Cryptococcus）。
+菌種頁面可用網址錨點直接分享，例如 `/#g0o0`（Aspergillus spp.）、`/m/#g6o0`（Cryptococcus）；
+加上 `:n` 可直接跳到該頁第 n 個感染情境，例如 `/#g7o0:8`（Candida endocarditis）。
+
+## 兩種進入方式
+
+guideline 的治療圖是依**感染情境（syndrome）**書寫的，但菌種列表天然是以菌種進入。因此
+Aspergillus、Mucorales、Cryptococcus、Candida 這四個有 hub 頁的分類，在列表上同時提供
+「依感染情境查詢」的入口；單一菌種頁若只是沿用 genus-level 建議，頁首會標示並連回 hub 頁。
+hub 頁本身另有感染情境索引可直接跳轉。
 
 ## 為什麼要拆檔
 
@@ -51,6 +59,8 @@ data/org/<id>.json      單一菌種完整內容
 data/charts/<id>.json   單一菌種的流程圖 SVG
 build/extract.py        由 source/ 的單檔 HTML 產生上述 data/
 build/overrides.py      對原始檔內容的修正層（見下）
+build/svgkit.py         流程圖共用的 SVG 元件（會量測文字、自動縮排版）
+build/charts_*.py       各別重建的流程圖產生器
 source/                 原始單一檔案 HTML（頁尾提供離線下載）
 ```
 
@@ -61,6 +71,22 @@ source/                 原始單一檔案 HTML（頁尾提供離線下載）
 不同的地方都能單獨被檢視與稽核，套用清單也會寫進 `data/meta.json` 的 `overrides`。
 
 目前的修正：
+
+- **dose-typo-dayay** — 原始檔有 195 處 `mg/kg/dayay`（治療列 98 處 + 流程圖 SVG 內 97 處，
+  共 35 個菌種），是劑量正規化時 `d`→`day` 取代出錯的殘留，修正為 `/day`。
+
+- **mucormycosis-pathway** — Cornely 2019 Figure 5 是真正的決策路徑（緊急處置 → 手術清創與
+  立即開始治療並行 → 依腦部侵犯／SOT／腎功能不全分支 → 反應評估 → 疾病進展／毒性分支），
+  原始檔把它壓成三列平鋪treatment。三個藥物可及性分頁（A/B/C）各自重建為原本的路徑。
+  推薦強度是**從原圖填色取樣**得到的（#ddedde strong、#fff9d7 moderate、#feebed marginal、
+  #f7dfdf against），不是從文字推測——因此修正了兩處誤讀：liposomal amphotericin B <5 mg/kg
+  與 combination with posaconazole 都是 *marginally recommended*，不是 recommended against。
+
+- **endemic-stratification** — endemic mycoses 的治療列其實已經帶有 guideline 的
+  severity / site / phase 分層（光是 coccidioidomycosis 就有六個 clinical setting），但流程圖把
+  它們畫成一條平鋪清單。新增 `charts_stratified.py`，依每列自己的 clinical setting 欄分組成分支，
+  藥物、劑量、療程、分級與原始 priority 用語全部照原文不動。目前套用在 7 張 endemic 圖；
+  全站 152 個 syndrome 中有 91 個適用同一機制。
 
 - **cryptococcosis-algorithm** — 原始檔的 Cryptococcus 流程圖以菌種為起點，但
   guideline 本身不是這樣分層。Chang 2024 Figure 1 的分支順序是
