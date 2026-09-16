@@ -101,9 +101,9 @@ body.clinical-view .tcard details{display:none}
 
 /* charts */
 .chartitem{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:10px 0;background:#fff}
-.chartthumb{position:relative;width:100%;max-height:50vh;overflow:hidden;background:#f3f5f3;padding:8px;
+.chartthumb{position:relative;width:100%;max-height:58vh;overflow:hidden;background:#f3f5f3;padding:8px;
   cursor:zoom-in;display:block;border:0}
-.chartthumb::after{content:"🔍 點一下放大";position:absolute;left:0;right:0;bottom:0;padding:26px 0 9px;
+.chartthumb::after{content:"🔍 點一下放大（可雙指縮放）";position:absolute;left:0;right:0;bottom:0;padding:26px 0 9px;
   font-size:12px;font-weight:800;color:#2f4a3e;
   background:linear-gradient(180deg,#f3f5f300,#f3f5f3ee 55%,#f3f5f3)}
 .chartthumb svg{width:100%;height:auto;display:block;background:#fff;border-radius:6px}
@@ -117,9 +117,11 @@ body.clinical-view .tcard details{display:none}
 .viewer .vbar{display:flex;gap:8px;align-items:center;padding:calc(9px + env(safe-area-inset-top)) 12px 9px;
   background:#16211d;color:#fff}
 .viewer .vbar .title{font-size:12.5px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.viewer .vbar .zoomlevel{font-size:11.5px;font-weight:800;color:#cfe0d7;min-width:44px;text-align:right}
 .viewer .vbar button{border:1px solid #ffffff40;background:#ffffff1a;color:#fff;border-radius:9px;
   min-width:40px;padding:8px 10px;font-size:14px;font-weight:800;cursor:pointer}
-.viewer .vstage{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px;background:#0f1614}
+.viewer .vstage{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px;background:#0f1614;
+  touch-action:pan-x pan-y;overscroll-behavior:contain}
 .viewer .vstage .inner{background:#fff;border-radius:8px;padding:8px;width:900px;transform-origin:0 0}
 .viewer .vstage .inner svg{width:100%;height:auto;display:block}
 
@@ -149,3 +151,12 @@ body.clinical-view .tcard details{display:none}
 .se-chips.collapsed .se-chip:nth-child(n+7){display:none}
 .se-more{margin-top:9px;width:100%;border:1px dashed #b5c6bc;background:#fff;border-radius:10px;
   padding:9px;font-size:12.5px;font-weight:750;color:#35604a}
+
+/* Treatment cards grouped by the clinical setting the rows carry — the same
+   stratification the flowchart draws, in text a phone can read unzoomed. */
+.stratum{margin:14px 0 4px}
+.stratum-head{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:850;color:#2c3a33;
+  padding:8px 11px;background:#eef3f0;border:1px solid var(--line);border-radius:10px;line-height:1.4}
+.stratum-head span{margin-left:auto;font-size:10.5px;font-weight:800;color:#5c6a62;background:#fff;
+  border-radius:999px;padding:2px 7px;flex:0 0 auto}
+.stratum .tcard{margin:8px 0 0}

@@ -29,7 +29,8 @@
     viewer: document.getElementById('viewer'),
     vstage: document.getElementById('vstage'),
     vinner: document.getElementById('vinner'),
-    viewerTitle: document.getElementById('viewerTitle')
+    viewerTitle: document.getElementById('viewerTitle'),
+    zoomLevel: document.getElementById('zoomLevel')
   };
 
   /* ---- list screen ------------------------------------------------------- */
@@ -130,7 +131,6 @@
       '<dl class="kv">' +
         kv('劑量', r[3], 'dose') +
         kv('療程', r[4]) +
-        kv('臨床情境', r[5]) +
         kv('推薦 / QoE', r[6]) +
         kv('後續治療', r[8]) +
       '</dl>' +
@@ -145,6 +145,21 @@
       '</div></details></div>';
   }
 
+  /* The flowchart shows the same rows grouped by clinical setting, but it is a
+     ~1800px-wide drawing that a phone can only read zoomed in. Group the cards
+     the same way so the stratification is legible as plain text too. */
+  function stratifiedCards(rows) {
+    var strata = [];
+    rows.forEach(function (r) { if (strata.indexOf(r[5]) < 0) strata.push(r[5]); });
+    if (strata.length < 2) return rows.map(treatmentCard).join('');
+    return strata.map(function (st) {
+      var group = rows.filter(function (r) { return r[5] === st; });
+      return '<div class="stratum"><div class="stratum-head">' + esc(st) +
+        '<span>' + group.length + '</span></div>' +
+        group.map(treatmentCard).join('') + '</div>';
+    }).join('');
+  }
+
   function syndromeSection(s, openFirst, idx) {
     var rows = s.rows.filter(rowVisible);
     var phases = [];
@@ -155,7 +170,7 @@
         '<div class="phasebar">' + phases.map(function (p) {
           return '<span class="phasechip ' + FG.phaseClass(p) + '">' + esc(p) + '</span>';
         }).join('') + '</div>' +
-        (rows.length ? rows.map(treatmentCard).join('')
+        (rows.length ? stratifiedCards(rows)
           : '<p style="color:#66716b;font-size:13px">此情境沒有 DIRECT 層級的建議；關閉「僅 Direct evidence」即可看到 extrapolated 建議。</p>') +
       '</div></details>';
   }
@@ -315,22 +330,62 @@
   }
   window.addEventListener('hashchange', route);
 
-  /* ---- chart viewer ------------------------------------------------------ */
-  var zoom = 1;
+  /* ---- chart viewer ------------------------------------------------------
+     These charts are ~1800 CSS px wide. Opening them "fit to width" on a phone
+     shrinks 12.5px type to under 3px, so the viewer opens at the chart's own
+     scale — where the text is the size it was drawn — and lets the reader pan,
+     pinch, or drop back to whole-chart view. */
+  var zoom = 1, chartW = 1800;
+
+  function stageInner() {
+    return Math.max(120, el.vstage.clientWidth - 20);
+  }
+
+  /* zoom 1 = whole chart across the screen; naturalZoom() = drawn at 1:1 */
+  function naturalZoom() {
+    return Math.max(1, chartW / stageInner());
+  }
+
+  function innerWidth_() {
+    return stageInner() * zoom;
+  }
 
   function applyZoom() {
-    el.vinner.style.width = Math.round(el.vstage.clientWidth * zoom - 20) + 'px';
+    el.vinner.style.width = Math.round(innerWidth_()) + 'px';
+    var pct = Math.round((innerWidth_() / chartW) * 100);
+    if (el.zoomLevel) el.zoomLevel.textContent = pct + '%';
+  }
+
+  /* Re-zoom about a point so the detail under the reader's fingers stays put. */
+  function setZoom(next, focusX, focusY) {
+    var rect = el.vstage.getBoundingClientRect();
+    var oldW = innerWidth_(), oldH = el.vinner.offsetHeight || 1;
+    var fx = focusX == null ? rect.width / 2 : focusX - rect.left;
+    var fy = focusY == null ? rect.height / 2 : focusY - rect.top;
+    var rx = (el.vstage.scrollLeft + fx) / oldW;
+    var ry = (el.vstage.scrollTop + fy) / oldH;
+
+    zoom = Math.min(Math.max(next, 1), naturalZoom() * 3);
+    applyZoom();
+
+    var newW = innerWidth_(), newH = el.vinner.offsetHeight || 1;
+    el.vstage.scrollLeft = rx * newW - fx;
+    el.vstage.scrollTop = ry * newH - fy;
   }
 
   function openViewer(index) {
     var fc = (state.charts || [])[index];
     if (!fc) return;
+    var m = /viewBox="0 0 ([\d.]+)/.exec(fc.svg);
+    chartW = m ? parseFloat(m[1]) : 1800;
     el.viewerTitle.textContent = fc.title;
     el.vinner.innerHTML = fc.svg;
     el.viewer.classList.add('open');
     document.body.style.overflow = 'hidden';
-    zoom = 1;
+    zoom = naturalZoom();
     applyZoom();
+    el.vstage.scrollLeft = 0;
+    el.vstage.scrollTop = 0;
   }
 
   function closeViewer() {
@@ -340,9 +395,53 @@
   }
 
   document.getElementById('viewerClose').addEventListener('click', closeViewer);
-  document.getElementById('zoomIn').addEventListener('click', function () { zoom = Math.min(zoom * 1.5, 12); applyZoom(); });
-  document.getElementById('zoomOut').addEventListener('click', function () { zoom = Math.max(zoom / 1.5, 1); applyZoom(); });
-  document.getElementById('zoomFit').addEventListener('click', function () { zoom = 1; applyZoom(); });
+  document.getElementById('zoomIn').addEventListener('click', function () { setZoom(zoom * 1.4); });
+  document.getElementById('zoomOut').addEventListener('click', function () { setZoom(zoom / 1.4); });
+  document.getElementById('zoomFit').addEventListener('click', function () {
+    // toggle between the whole chart and its own scale
+    setZoom(zoom > 1.05 ? 1 : naturalZoom(), 0, 0);
+    if (zoom === 1) { el.vstage.scrollLeft = 0; el.vstage.scrollTop = 0; }
+  });
+
+  /* pinch to zoom; one finger still pans natively */
+  var pinchFrom = 0, pinchZoom = 1;
+
+  function touchDist(t) {
+    var dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  el.vstage.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 2) {
+      pinchFrom = touchDist(e.touches);
+      pinchZoom = zoom;
+    }
+  }, { passive: true });
+
+  el.vstage.addEventListener('touchmove', function (e) {
+    if (e.touches.length !== 2 || !pinchFrom) return;
+    e.preventDefault();
+    var t = e.touches;
+    setZoom(pinchZoom * (touchDist(t) / pinchFrom),
+            (t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2);
+  }, { passive: false });
+
+  el.vstage.addEventListener('touchend', function (e) {
+    if (e.touches.length < 2) pinchFrom = 0;
+  }, { passive: true });
+
+  /* double-tap toggles whole-chart / own-scale */
+  var lastTap = 0;
+  el.vstage.addEventListener('touchend', function (e) {
+    var now = Date.now();
+    if (now - lastTap < 300 && e.changedTouches.length === 1) {
+      var t = e.changedTouches[0];
+      setZoom(zoom > 1.05 ? 1 : naturalZoom(), t.clientX, t.clientY);
+      lastTap = 0;
+    } else {
+      lastTap = now;
+    }
+  }, { passive: true });
 
   /* ---- events ------------------------------------------------------------ */
   var searchTimer;
