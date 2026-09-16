@@ -89,13 +89,16 @@
 <div class="viewer" id="viewer">
   <div class="vbar">
     <span class="title" id="viewerTitle"></span>
-    <button class="zoomlevel" id="zoomLevel" aria-label="目前放大倍率，點一下回復預設">100%</button>
-    <button id="zoomOut" aria-label="縮小">−</button>
-    <button id="zoomFit" aria-label="整張／原尺寸切換">⤢</button>
-    <button id="zoomIn" aria-label="放大">＋</button>
+    <button id="zoomFit" aria-label="整張／閱讀尺寸切換">⤢</button>
     <button id="viewerClose" aria-label="關閉">✕</button>
   </div>
   <div class="vstage" id="vstage"><div class="inner" id="vinner"></div></div>
+  <div class="vzoom">
+    <button id="zoomOut" aria-label="縮小">−</button>
+    <input id="zoomRange" type="range" min="0" max="1000" value="500" step="1" aria-label="放大倍率">
+    <button id="zoomIn" aria-label="放大">＋</button>
+    <button class="zoomlevel" id="zoomLevel" aria-label="目前放大倍率，點一下回復預設">100%</button>
+  </div>
 </div>
 
 <script src="../assets/js/core.js"></script>

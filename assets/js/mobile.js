@@ -30,7 +30,8 @@
     vstage: document.getElementById('vstage'),
     vinner: document.getElementById('vinner'),
     viewerTitle: document.getElementById('viewerTitle'),
-    zoomLevel: document.getElementById('zoomLevel')
+    zoomLevel: document.getElementById('zoomLevel'),
+    zoomRange: document.getElementById('zoomRange')
   };
 
   /* ---- list screen ------------------------------------------------------- */
@@ -379,10 +380,29 @@
     return stageInner() * zoom;
   }
 
+  function zoomCeiling() {
+    return naturalZoom() * 3;
+  }
+
+  /* The slider is logarithmic: a drag feels the same whether you are near the
+     whole-chart end or the magnified end. */
+  function zoomToSlider(z) {
+    var lo = Math.log(1), hi = Math.log(zoomCeiling());
+    return Math.round(((Math.log(z) - lo) / (hi - lo)) * 1000);
+  }
+
+  function sliderToZoom(v) {
+    var lo = Math.log(1), hi = Math.log(zoomCeiling());
+    return Math.exp(lo + (v / 1000) * (hi - lo));
+  }
+
   function applyZoom() {
     el.vinner.style.width = Math.round(innerWidth_()) + 'px';
     var pct = Math.round((innerWidth_() / chartW) * 100);
     if (el.zoomLevel) el.zoomLevel.textContent = pct + '%';
+    if (el.zoomRange && document.activeElement !== el.zoomRange) {
+      el.zoomRange.value = zoomToSlider(zoom);
+    }
   }
 
   /* Re-zoom about a point so the detail under the reader's fingers stays put. */
@@ -394,7 +414,7 @@
     var rx = (el.vstage.scrollLeft + fx) / oldW;
     var ry = (el.vstage.scrollTop + fy) / oldH;
 
-    zoom = Math.min(Math.max(next, 1), naturalZoom() * 3);
+    zoom = Math.min(Math.max(next, 1), zoomCeiling());
     applyZoom();
 
     var newW = innerWidth_(), newH = el.vinner.offsetHeight || 1;
@@ -428,6 +448,13 @@
   document.getElementById('zoomIn').addEventListener('click', function () { setZoom(zoom * 1.4); rememberZoom(); });
   document.getElementById('zoomOut').addEventListener('click', function () { setZoom(zoom / 1.4); rememberZoom(); });
 
+  if (el.zoomRange) {
+    el.zoomRange.addEventListener('input', function () {
+      setZoom(sliderToZoom(+el.zoomRange.value));
+    });
+    el.zoomRange.addEventListener('change', rememberZoom);
+  }
+
   /* the percentage doubles as "forget my size and use the default" */
   if (el.zoomLevel) {
     el.zoomLevel.addEventListener('click', function () {
@@ -441,6 +468,25 @@
     setZoom(zoom > 1.05 ? 1 : readingZoom(), 0, 0);
     if (zoom === 1) { el.vstage.scrollLeft = 0; el.vstage.scrollTop = 0; }
   });
+
+  /* iOS Safari reports pinch through gesture events rather than two-finger
+     touchmove, and zooms the page unless they are cancelled. */
+  var gestureFrom = 0;
+
+  el.viewer.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+    gestureFrom = zoom;
+  }, { passive: false });
+
+  el.viewer.addEventListener('gesturechange', function (e) {
+    e.preventDefault();
+    setZoom(gestureFrom * e.scale, e.clientX, e.clientY);
+  }, { passive: false });
+
+  el.viewer.addEventListener('gestureend', function (e) {
+    e.preventDefault();
+    rememberZoom();
+  }, { passive: false });
 
   /* pinch to zoom; one finger still pans natively */
   var pinchFrom = 0, pinchZoom = 1;

@@ -117,9 +117,22 @@ body.clinical-view .tcard details{display:none}
 .viewer .vbar{display:flex;gap:8px;align-items:center;padding:calc(9px + env(safe-area-inset-top)) 12px 9px;
   background:#16211d;color:#fff}
 .viewer .vbar .title{font-size:12.5px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.viewer .vbar .zoomlevel{font-size:11.5px;font-weight:800;color:#cfe0d7;min-width:52px;text-align:center;
-  background:none;border:1px solid transparent;border-radius:8px;padding:7px 4px;cursor:pointer}
-.viewer .vbar .zoomlevel.custom{color:#ffe08a;border-color:#ffe08a55;background:#ffe08a14}
+/* A continuous zoom control, so the size is adjustable by dragging rather than
+   only in fixed steps — and it works where pinch gestures do not. */
+.viewer .vzoom{display:flex;align-items:center;gap:10px;background:#16211d;border-top:1px solid #ffffff14;
+  padding:8px 12px calc(10px + env(safe-area-inset-bottom))}
+.viewer .vzoom button{border:1px solid #ffffff40;background:#ffffff1a;color:#fff;border-radius:9px;
+  min-width:44px;padding:9px 10px;font-size:15px;font-weight:800;cursor:pointer;flex:0 0 auto}
+.viewer .vzoom .zoomlevel{font-size:11.5px;font-weight:800;color:#cfe0d7;min-width:56px;text-align:center;
+  background:none;border:1px solid transparent;padding:9px 4px}
+.viewer .vzoom .zoomlevel.custom{color:#ffe08a;border-color:#ffe08a55;background:#ffe08a14}
+.viewer .vzoom input[type=range]{flex:1;min-width:60px;height:34px;background:none;-webkit-appearance:none;appearance:none}
+.viewer .vzoom input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:999px;background:#ffffff33}
+.viewer .vzoom input[type=range]::-moz-range-track{height:6px;border-radius:999px;background:#ffffff33}
+.viewer .vzoom input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;
+  margin-top:-10px;border-radius:50%;background:#fff;border:2px solid #315c49;box-shadow:0 2px 6px #0006}
+.viewer .vzoom input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;
+  border:2px solid #315c49;box-shadow:0 2px 6px #0006}
 .viewer .vbar button{border:1px solid #ffffff40;background:#ffffff1a;color:#fff;border-radius:9px;
   min-width:40px;padding:8px 10px;font-size:14px;font-weight:800;cursor:pointer}
 .viewer .vstage{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px;background:#0f1614;
