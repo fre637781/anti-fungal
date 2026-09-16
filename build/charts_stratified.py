@@ -43,12 +43,26 @@ def _raw_priority(row):
     return raw if raw.upper() != LABEL[priority_class(row[0])] else ""
 
 
+# Type scale. These charts are read on phones at the chart's own scale, so the
+# smallest line has to survive that — 11.5px was legible on a desktop canvas
+# and too small in the hand.
+FS_TIER = 11.5      # PREFERRED / ALTERNATIVE …
+FS_PHASE = 11.5     # the phase shown at the card's right edge
+FS_RAW = 12         # the row's own priority wording
+FS_DRUG = 14.5      # drug / regimen
+FS_BODY = 12.5      # dose and duration
+FS_GRADE = 12       # recommendation / QoE
+FS_STRATUM = 14     # the clinical-setting label
+
+LH_RAW, LH_DRUG, LH_BODY, LH_STRATUM = 16, 19, 16, 19
+
+
 def _option_height(row, w):
-    lines = len(wrap(row[2], w - 22, 13.5))
+    lines = len(wrap(row[2], w - 22, FS_DRUG))
     body = [t for t in (row[3], row[4]) if t and "not specified" not in t.lower()]
-    extra = sum(len(wrap(t, w - 22, 11.5)) for t in body)
-    raw = 15 * len(wrap(_raw_priority(row), w - 22, 11)) if _raw_priority(row) else 0
-    return 30 + lines * 18 + extra * 15 + raw + (20 if row[6] else 0) + 12
+    extra = sum(len(wrap(t, w - 22, FS_BODY)) for t in body)
+    raw = LH_RAW * len(wrap(_raw_priority(row), w - 22, FS_RAW)) if _raw_priority(row) else 0
+    return 32 + lines * LH_DRUG + extra * LH_BODY + raw + (22 if row[6] else 0) + 12
 
 
 def _option(x, y, w, row):
@@ -56,27 +70,27 @@ def _option(x, y, w, row):
     fill, stroke, ink = TIER[tier]
     h = _option_height(row, w)
     out = [rect(x, y, w, h, fill, stroke, rx=10, sw=2.5)]
-    ty = y + 20
-    out.append(label(x + 11, ty, LABEL[tier], 10, "850", "start", ink))
+    ty = y + 21
+    out.append(label(x + 11, ty, LABEL[tier], FS_TIER, "850", "start", ink))
     if row[1]:
-        out.append(label(x + w - 11, ty, row[1], 10, "700", "end", "#5c6a62"))
-    ty += 19
+        out.append(label(x + w - 11, ty, row[1], FS_PHASE, "700", "end", "#5c6a62"))
+    ty += 20
     raw = _raw_priority(row)
     if raw:
-        for ln in wrap(raw, w - 22, 11):
-            out.append(label(x + 11, ty - 3, "來源用語：" + ln, 11, "600", "start", "#5c6a62"))
-            ty += 15
-    for ln in wrap(row[2], w - 22, 13.5):
-        out.append(label(x + 11, ty, ln, 13.5, "800", "start", "#18211d"))
-        ty += 18
+        for ln in wrap(raw, w - 22, FS_RAW):
+            out.append(label(x + 11, ty - 3, "來源用語：" + ln, FS_RAW, "600", "start", "#5c6a62"))
+            ty += LH_RAW
+    for ln in wrap(row[2], w - 22, FS_DRUG):
+        out.append(label(x + 11, ty, ln, FS_DRUG, "800", "start", "#18211d"))
+        ty += LH_DRUG
     for text, prefix in ((row[3], "Dose: "), (row[4], "Duration: ")):
         if not text or "not specified" in text.lower():
             continue
-        for i, ln in enumerate(wrap(text, w - 22, 11.5)):
-            out.append(label(x + 11, ty + 3, (prefix if i == 0 else "") + ln, 11.5, "400", "start", "#3f4b45"))
-            ty += 15
+        for i, ln in enumerate(wrap(text, w - 22, FS_BODY)):
+            out.append(label(x + 11, ty + 3, (prefix if i == 0 else "") + ln, FS_BODY, "400", "start", "#3f4b45"))
+            ty += LH_BODY
     if row[6]:
-        out.append(label(x + 11, ty + 14, "Recommendation / QoE: " + row[6], 11, "750", "start", ink))
+        out.append(label(x + 11, ty + 15, "Recommendation / QoE: " + row[6], FS_GRADE, "750", "start", ink))
     return "".join(out), y + h
 
 
@@ -139,8 +153,8 @@ def _build_bands(org_name, syndrome, strata, rows):
         ow = min((avail - (used - 1) * 12) / used, OPTION_MIN_W * 2)
         per_row = used
 
-        lab_lines = wrap(st, BAND_LABEL_W - 24, 13)
-        lab_h = max(52, len(lab_lines) * 17 + 26)
+        lab_lines = wrap(st, BAND_LABEL_W - 24, FS_STRATUM)
+        lab_h = max(54, len(lab_lines) * LH_STRATUM + 26)
 
         # lay the options out in a wrapped grid, tracking each grid row's height
         oy, row_h, placed = y, 0, []
@@ -154,10 +168,10 @@ def _build_bands(org_name, syndrome, strata, rows):
         band_h = max(lab_h, (oy + row_h) - y)
 
         s.append(rect(X0 + 30, y, BAND_LABEL_W, band_h, COND[0], COND[1], rx=10, sw=2.5))
-        ty = y + (band_h - len(lab_lines) * 17) / 2 + 13
+        ty = y + (band_h - len(lab_lines) * LH_STRATUM) / 2 + FS_STRATUM
         for ln in lab_lines:
-            s.append(label(X0 + 30 + BAND_LABEL_W / 2, ty, ln, 13, "800", "middle", "#2c3a33"))
-            ty += 17
+            s.append(label(X0 + 30 + BAND_LABEL_W / 2, ty, ln, FS_STRATUM, "800", "middle", "#2c3a33"))
+            ty += LH_STRATUM
         for ox_, oy_, r in placed:
             s.append(_option(ox_, oy_, ow, r)[0])
 
@@ -202,13 +216,13 @@ def build_svg(org_name, syndrome):
     bottoms = []
     for i, st in enumerate(strata):
         cx = X0 + i * (cw + gap)
-        lines = wrap(st, cw - 20, 13)
-        h = max(50, len(lines) * 17 + 24)
+        lines = wrap(st, cw - 20, FS_STRATUM)
+        h = max(52, len(lines) * LH_STRATUM + 24)
         s.append(rect(cx, cy, cw, h, COND[0], COND[1], rx=10, sw=2.5))
-        ty = cy + (h - len(lines) * 17) / 2 + 13
+        ty = cy + (h - len(lines) * LH_STRATUM) / 2 + FS_STRATUM
         for ln in lines:
-            s.append(label(cx + cw / 2, ty, ln, 13, "800", "middle", "#2c3a33"))
-            ty += 17
+            s.append(label(cx + cw / 2, ty, ln, FS_STRATUM, "800", "middle", "#2c3a33"))
+            ty += LH_STRATUM
         s.append(elbow(W / 2, bus, cx + cw / 2, cy, bus))
 
         oy = cy + h + 22

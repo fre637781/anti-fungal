@@ -346,6 +346,15 @@
     return Math.max(1, chartW / stageInner());
   }
 
+  /* 1:1 is still small in the hand — the smallest line in these charts is
+     12.5px. Open a step beyond it so that line lands near 17px on a phone,
+     but never below 1:1 on a wide screen. */
+  var READING_BOOST = 1.35;
+
+  function readingZoom() {
+    return Math.max(naturalZoom() * READING_BOOST, 1);
+  }
+
   function innerWidth_() {
     return stageInner() * zoom;
   }
@@ -382,7 +391,7 @@
     el.vinner.innerHTML = fc.svg;
     el.viewer.classList.add('open');
     document.body.style.overflow = 'hidden';
-    zoom = naturalZoom();
+    zoom = readingZoom();
     applyZoom();
     el.vstage.scrollLeft = 0;
     el.vstage.scrollTop = 0;
@@ -399,7 +408,7 @@
   document.getElementById('zoomOut').addEventListener('click', function () { setZoom(zoom / 1.4); });
   document.getElementById('zoomFit').addEventListener('click', function () {
     // toggle between the whole chart and its own scale
-    setZoom(zoom > 1.05 ? 1 : naturalZoom(), 0, 0);
+    setZoom(zoom > 1.05 ? 1 : readingZoom(), 0, 0);
     if (zoom === 1) { el.vstage.scrollLeft = 0; el.vstage.scrollTop = 0; }
   });
 
@@ -436,7 +445,7 @@
     var now = Date.now();
     if (now - lastTap < 300 && e.changedTouches.length === 1) {
       var t = e.changedTouches[0];
-      setZoom(zoom > 1.05 ? 1 : naturalZoom(), t.clientX, t.clientY);
+      setZoom(zoom > 1.05 ? 1 : readingZoom(), t.clientX, t.clientY);
       lastTap = 0;
     } else {
       lastTap = now;
