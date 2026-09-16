@@ -98,25 +98,16 @@ def _header(org_name, syndrome, subtitle):
         s.append(rect(lx, ly + 13, 20, 20, fill, stroke, rx=5, sw=2))
         s.append(label(lx + 27, ly + 28, LABEL[key], 12, "800", fill=ink))
         lx += 27 + len(LABEL[key]) * 8 + 30
-    s.append(label(W - X0 - 16, ly + 28, "底色 = 治療建議層級；分層 = 來源表格的 clinical setting 欄",
+    s.append(label(W - X0 - 16, ly + 28,
+                   "底色 = 建議層級；分層 = 來源表格 clinical setting 欄；逐列 locator 見 Audit view",
                    11.5, "700", "end", "#66716b"))
     return "".join(s)
 
 
 def _footnote(s, ny):
-    notes = [
-        "分層（白框）直接取自來源表格的 clinical setting 欄，不是重新歸納的分類；每張卡片的藥物、劑量、療程與 "
-        "recommendation/QoE 皆為該列原文。逐列 exact locator 請在 Audit view 查看。",
-        "底色為治療建議層級：綠=Preferred、黃=Alternative、藍=Salvage、紅=Avoid。",
-    ]
-    rendered, ty = [], ny + 28
-    for nt in notes:
-        t, dy = block(X0 + 20, ty, W - 2 * X0 - 40, nt, 12.5, "400", "start", "#4a5a52", lh=17, pad=0)
-        rendered.append(t)
-        ty += dy + 9
-    s.append(rect(X0, ny, W - 2 * X0, ty - ny - 9 + 20, "#f7f9f8", "#c9d3cd", rx=13, sw=2))
-    s.extend(rendered)
-    return int(ty - 9 + 20 + 28)
+    """Nothing to add below the chart — the legend row already carries the
+    provenance line. Just leave a bottom margin."""
+    return int(ny + 20)
 
 
 def _build_bands(org_name, syndrome, strata, rows):
@@ -239,10 +230,7 @@ def chart(org, syndrome, original):
         "title": syndrome["title"],
         "source": original.get("source", "See row-level exact source locators"),
         "kind": "GUIDELINE-DERIVED SUMMARY SVG — STRATIFIED BY THE SOURCE'S OWN CLINICAL-SETTING COLUMN",
-        "disclaimer": ("Same treatment rows as the table on this page, arranged by the clinical "
-                       "setting each row already carries (severity, site or phase) instead of a "
-                       "single flat list. Wording, doses, durations and grades are unchanged; use "
-                       "the cited original Figure/Table/text for definitive guidance."),
+        "disclaimer": "重建摘要圖：正式分支、措辭與分級以所引用的原始 Figure / Table / text 為準。",
         "rebuilt": "stratified",
         "svg": build_svg(org["name"], syndrome),
         "visual_type": "guideline-derived-summary",

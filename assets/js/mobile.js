@@ -39,8 +39,7 @@
     el.metrics.innerHTML =
       '<span>' + s.organisms + ' 菌種</span><span>' + s.groups + ' 分類</span>' +
       '<span>' + s.rows + ' 治療建議</span><span>' + s.charts + ' 流程圖</span>';
-    el.buildinfo.textContent = state.meta.title + ' ' + state.meta.version +
-      ' · 來源檔 SHA-256 ' + state.meta.source_sha256;
+    el.buildinfo.textContent = state.meta.title + ' ' + state.meta.version;
 
     el.groupChips.innerHTML = '<button class="chip active" data-group="all">全部</button>' +
       state.meta.groups.map(function (g) {
@@ -169,9 +168,8 @@
     if (o.normalization_note) rows.push(['Dose notation', o.normalization_note]);
     if (o.notes) rows.push(['Notes', o.notes]);
     if (o.audit_summary) {
-      rows.push(['Audit scope', o.audit_summary.scope + ' · rounds ' + o.audit_summary.rounds]);
+      rows.push(['Audit scope', o.audit_summary.scope]);
       rows.push(['Population scope', o.audit_summary.population_scope]);
-      rows.push(['Visual status', o.audit_summary.visual_status]);
     }
     return '<details class="sect"><summary>Provenance / evidence scope</summary><div class="sect-body">' +
       '<div class="infogrid">' + rows.map(function (r) {
@@ -202,11 +200,10 @@
       '<div class="flow-priority-legend" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">' +
         '<span class="priority-pill preferred">PREFERRED</span><span class="priority-pill alternative">ALTERNATIVE</span>' +
         '<span class="priority-pill salvage">SALVAGE</span><span class="priority-pill avoid">AVOID</span></div>' +
-      '<p class="zoomhint" style="padding:0 0 6px">點圖片可全螢幕放大、縮放與捲動。</p>' +
       charts.map(function (fc, i) {
         return '<div class="chartitem">' +
           '<button class="chartthumb" data-chart="' + i + '" aria-label="放大：' + esc(fc.title) + '">' + fc.svg + '</button>' +
-          '<div class="chartmeta"><span class="kind">' + esc(fc.kind) + '</span>' + esc(fc.title) +
+          '<div class="chartmeta"><span class="kind">' + esc(fc.title) + '</span>' +
             '<div class="chart-source"><b>Source:</b> ' + FG.sourceHtml(fc.source) + FG.referenceLinksHtml(fc.source) + '</div>' +
             '<div class="chart-disclaimer">' + esc(fc.disclaimer) + '</div></div></div>';
       }).join('');

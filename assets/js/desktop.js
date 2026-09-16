@@ -119,7 +119,7 @@
     if (o.overview) rows.push(['Overview', o.overview]);
     if (o.notes) rows.push(['Notes', o.notes]);
     if (o.audit_summary) {
-      rows.push(['Audit scope', o.audit_summary.scope + ' · rounds ' + o.audit_summary.rounds]);
+      rows.push(['Audit scope', o.audit_summary.scope]);
       rows.push(['Population scope', o.audit_summary.population_scope]);
     }
     return '<div class="source-panel"><b>Provenance / evidence scope</b><div class="source-meta">' +
@@ -204,15 +204,14 @@
   function chartsHtml(charts) {
     if (!charts.length) return '';
     return '<section class="flowchart-section"><h3>Treatment flowcharts / algorithms</h3>' +
-      '<p class="fc-note">每張圖均標示其 provenance。若原 guideline 有正式 treatment figure，標示為 original-source reconstruction；否則明確標示為 guideline-derived summary。</p>' +
       '<div class="flow-priority-legend"><span class="flow-key preferred">Preferred</span>' +
       '<span class="flow-key alternative">Alternative</span><span class="flow-key salvage">Salvage</span>' +
       '<span class="flow-key avoid">Avoid</span>' +
-      '<span class="flow-key-note">流程圖節點底色與治療表格的 row 網底使用同一組顏色。</span></div>' +
+      '</div>' +
       charts.map(function (fc, i) {
         return '<div class="flowchart-card">' +
           '<div class="flowchart-svg-wrap"><div class="flowchart-svg">' + fc.svg + '</div></div>' +
-          '<div class="flowchart-caption"><span><b>' + esc(fc.kind) + '</b><br>' + esc(fc.title) +
+          '<div class="flowchart-caption"><span><b>' + esc(fc.title) + '</b>' +
             '<div class="chart-source"><b>Source:</b> ' + FG.sourceHtml(fc.source) + FG.referenceLinksHtml(fc.source) + '</div>' +
             '<div class="chart-disclaimer">' + esc(fc.disclaimer) + '</div></span>' +
           '<button class="fc-open" data-chart="' + i + '">全螢幕放大</button></div></div>';
@@ -236,7 +235,6 @@
         '<button class="view-btn' + (document.body.classList.contains('clinical-view') ? ' active' : '') + '" data-view="clinical">Clinical view</button>' +
         '<button class="view-btn' + (document.body.classList.contains('clinical-view') ? '' : ' active') + '" data-view="audit">Audit view</button>' +
       '</div>' +
-      '<div class="audit-status"><b>Audit status:</b> evidence-origin classified. DIRECT-only mode hides extrapolated and label-derived rows.</div>' +
       '<div class="audit-controls no-print"><button class="audit-toggle' + (state.directOnly ? ' active' : '') + '" id="directOnlyBtn">Direct guideline evidence only</button></div>' +
       FG.hubBannerHtml(o, state.index) + syndromeIndexHtml(o) +
       comparisonHtml(o) + chartsHtml(charts) +

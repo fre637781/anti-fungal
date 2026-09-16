@@ -171,10 +171,7 @@ def build_svg(panel):
 
     # footnote
     ny = obottom + 40
-    notes = panel["notes"] + [
-        "節點底色為 guideline 原圖的推薦強度，對應本站色階：綠=Strongly / 黃=Moderately / 藍=Marginally / 紅=Recommended against。"
-        "白色方塊是分支條件，不是推薦等級。",
-    ]
+    notes = panel["notes"] + ["白色方塊是分支條件，不是推薦等級。"]
     rendered, ty = [], ny + 28
     for nt in notes:
         t, dy = block(X0 + 20, ty, W - 2 * X0 - 40, nt, 12.5, "400", "start", "#4a5a52", lh=17, pad=0)
@@ -297,11 +294,7 @@ PANELS = [
     },
 ]
 
-DISCLAIMER = ("Reconstruction of Cornely 2019 Figure 5. Node shading is the guideline's own "
-              "recommendation strength, read from the source figure's fill colours. Surgery and "
-              "immediate antifungal initiation are a single first step, and the response assessment "
-              "loop drives the progressive-disease and toxicity branches — use the original figure "
-              "and text for definitive wording.")
+DISCLAIMER = "重建摘要圖：正式分支、措辭與分級以所引用的原始 Figure / Table / text 為準。"
 
 
 def charts():

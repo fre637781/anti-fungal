@@ -191,7 +191,6 @@ def build_svg(highlight=None):
         "† If Cryptococcus spp in a respiratory specimen is judged to be airway colonisation after careful evaluation and no treatment is elected, (AIII) regular follow-up is recommended, especially before future immunosuppression.",
         "¶ A shorter duration (eg, 3 months) can be considered in immunocompetent individuals with mild isolated pulmonary cryptococcosis.",
         "Pulmonary disease with CNS involvement, cryptococcaemia, or a blood cryptococcal antigen titre >1:512 is treated as CNS disease (Panel 6). Cryptococcaemia: (AIIu) treat as CNS disease; all other non-CNS non-pulmonary disseminated disease: (BIIu) treat as CNS disease (Panel 7).",
-        "Node colour encodes the recommendation grade: green = A (strongly recommended), amber = B (moderately recommended), blue = C (marginally recommended), red = D (recommended against). Grades and level of evidence are transcribed from the source figure.",
     ]
     rendered, ny2 = [], fy + 30
     for n in notes:
@@ -211,11 +210,7 @@ def chart(highlight=None):
         "title": "Cryptococcosis treatment algorithm — involvement → host → severity (Figure 1)",
         "source": SOURCE,
         "kind": "GUIDELINE-DERIVED SUMMARY SVG — RESTRUCTURED TO THE SOURCE FIGURE'S OWN BRANCHING ORDER",
-        "disclaimer": ("Reconstruction of Chang 2024 Figure 1. The branching order is the guideline's own: "
-                       "syndrome / involvement first, then host (HIV, SOT, non-HIV/non-SOT), then severity; "
-                       "species appears only as a modifier (Panel 13, Panel 15). Regimens, durations and "
-                       "grades are transcribed from Figure 1 and the cited panels — use the original "
-                       "Figure/Panel text for definitive wording."),
+        "disclaimer": "重建摘要圖：正式分支、措辭與分級以所引用的原始 Figure / Table / text 為準。",
         "svg": build_svg(highlight),
         "rebuilt": "cryptococcosis-algorithm",
         "visual_type": "guideline-derived-summary",

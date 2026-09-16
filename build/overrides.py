@@ -76,6 +76,45 @@ def fix_typos(data, charts):
     return n
 
 
+SHORT_DISCLAIMER = "重建摘要圖：正式分支、措辭與分級以所引用的原始 Figure / Table / text 為準。"
+
+
+# Trailing clauses that explain the file's own citation policy rather than
+# locating anything. Dropped from the displayed Source line; the leading
+# citation, which the reference lookup matches on, is untouched.
+SOURCE_NOTE_CLAUSES = (
+    "no original treatment-flowchart",
+    "PDF page not asserted",
+    "derived from syndrome recommendations",
+)
+
+
+def trim_source_notes(charts):
+    n = 0
+    for bundle in charts.values():
+        for c in bundle.get("charts", []):
+            parts = [p.strip() for p in c["source"].split("|")]
+            kept = [p for i, p in enumerate(parts)
+                    if i < 2 or not any(k in p for k in SOURCE_NOTE_CLAUSES)]
+            if len(kept) != len(parts):
+                c["source"] = " | ".join(kept)
+                n += 1
+    return n
+
+
+def trim_disclaimers(charts):
+    """The source charts repeat their own colour legend in prose beneath every
+    figure. Keep the part that matters — defer to the original — and drop the
+    restatement."""
+    n = 0
+    for bundle in charts.values():
+        for c in bundle.get("charts", []):
+            if not c.get("rebuilt") and "background colors encode" in c.get("disclaimer", ""):
+                c["disclaimer"] = SHORT_DISCLAIMER
+                n += 1
+    return n
+
+
 def _bundle(charts, name):
     bundle = charts.get(name)
     if not bundle:
@@ -133,3 +172,11 @@ def apply(data, charts):
             n += 1
     APPLIED.append("stratified-charts — %d charts redrawn as severity / site / phase pathways "
                    "from the rows' own clinical-setting column" % n)
+
+    # --- last, so it only touches charts still carrying the source's prose ----
+    trimmed = trim_disclaimers(charts)
+    sources = trim_source_notes(charts)
+    if trimmed or sources:
+        APPLIED.append("trim-chart-notes — %d disclaimers reduced to the defer-to-original "
+                       "sentence, %d Source lines stripped of citation-policy asides"
+                       % (trimmed, sources))

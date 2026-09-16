@@ -72,6 +72,13 @@ source/                 原始單一檔案 HTML（頁尾提供離線下載）
 
 目前的修正：
 
+- **trim-chart-notes** — 頁面上原本有幾層只是在解釋「這張圖是怎麼做出來的」，而且多半跟旁邊
+  的圖例重複：每張圖標題上方的全大寫方法論字串、圖表區塊上方的 provenance 說明、圖內重述
+  色階的註腳、`Audit status` 一行、audit rounds 計數、手機頁尾的來源檔 SHA-256，以及 8 條
+  Source 行末的引用政策附註。這些都移除了。保留的是真正有臨床意義的部分：Source 與 exact
+  locator 連結、evidence scope／dose notation，以及每張圖一句「正式分支、措辭與分級以所引用
+  的原始 Figure / Table / text 為準」。
+
 - **dose-typo-dayay** — 原始檔有 195 處 `mg/kg/dayay`（治療列 98 處 + 流程圖 SVG 內 97 處，
   共 35 個菌種），是劑量正規化時 `d`→`day` 取代出錯的殘留，修正為 `/day`。
 
