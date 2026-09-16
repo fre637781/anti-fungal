@@ -193,6 +193,19 @@
     try { return localStorage.getItem(VIEW_KEY); } catch (e) { return null; }
   }
 
+  /* Small, per-viewer preferences. Storage can throw in private mode, so every
+     read falls back and every write is best-effort. */
+  function readPref(key, fallback) {
+    try {
+      var v = localStorage.getItem(key);
+      return v == null ? fallback : v;
+    } catch (e) { return fallback; }
+  }
+
+  function writePref(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* private mode */ }
+  }
+
   function setView(view) {
     try { localStorage.setItem(VIEW_KEY, view); } catch (e) { /* private mode */ }
   }
@@ -247,6 +260,8 @@
     referenceLinksHtml: referenceLinksHtml,
     pageReferences: pageReferences,
     storedView: storedView,
+    readPref: readPref,
+    writePref: writePref,
     setView: setView,
     switchUrl: switchUrl,
     installViewSwitch: installViewSwitch,

@@ -346,13 +346,33 @@
     return Math.max(1, chartW / stageInner());
   }
 
-  /* 1:1 is still small in the hand — the smallest line in these charts is
-     12.5px. Open a step beyond it so that line lands near 17px on a phone,
-     but never below 1:1 on a wide screen. */
-  var READING_BOOST = 1.35;
+  /* How much past 1:1 a chart opens at. 1.35 puts the smallest line near 17px
+     on a 390px phone, but reading comfort is personal — whatever size the
+     reader settles on is remembered and used for the next chart. */
+  var DEFAULT_BOOST = 1.35, ZOOM_PREF = 'fg-chart-zoom';
+
+  function savedBoost() {
+    var v = parseFloat(FG.readPref(ZOOM_PREF, DEFAULT_BOOST));
+    return isNaN(v) ? DEFAULT_BOOST : Math.min(Math.max(v, 0.4), 4);
+  }
 
   function readingZoom() {
-    return Math.max(naturalZoom() * READING_BOOST, 1);
+    return Math.max(naturalZoom() * savedBoost(), 1);
+  }
+
+  /* Remember the reader's size — but not the whole-chart view, which is a
+     glance at the layout rather than a reading size. */
+  function rememberZoom() {
+    if (zoom <= 1.02) return;
+    FG.writePref(ZOOM_PREF, (zoom / naturalZoom()).toFixed(3));
+    markZoomCustom();
+  }
+
+  function markZoomCustom() {
+    if (!el.zoomLevel) return;
+    var custom = Math.abs(savedBoost() - DEFAULT_BOOST) > 0.02;
+    el.zoomLevel.classList.toggle('custom', custom);
+    el.zoomLevel.title = custom ? '已記住你設定的大小，點一下回復預設' : '點一下回復預設大小';
   }
 
   function innerWidth_() {
@@ -393,6 +413,7 @@
     document.body.style.overflow = 'hidden';
     zoom = readingZoom();
     applyZoom();
+    markZoomCustom();
     el.vstage.scrollLeft = 0;
     el.vstage.scrollTop = 0;
   }
@@ -404,8 +425,17 @@
   }
 
   document.getElementById('viewerClose').addEventListener('click', closeViewer);
-  document.getElementById('zoomIn').addEventListener('click', function () { setZoom(zoom * 1.4); });
-  document.getElementById('zoomOut').addEventListener('click', function () { setZoom(zoom / 1.4); });
+  document.getElementById('zoomIn').addEventListener('click', function () { setZoom(zoom * 1.4); rememberZoom(); });
+  document.getElementById('zoomOut').addEventListener('click', function () { setZoom(zoom / 1.4); rememberZoom(); });
+
+  /* the percentage doubles as "forget my size and use the default" */
+  if (el.zoomLevel) {
+    el.zoomLevel.addEventListener('click', function () {
+      FG.writePref(ZOOM_PREF, DEFAULT_BOOST);
+      markZoomCustom();
+      setZoom(readingZoom(), 0, 0);
+    });
+  }
   document.getElementById('zoomFit').addEventListener('click', function () {
     // toggle between the whole chart and its own scale
     setZoom(zoom > 1.05 ? 1 : readingZoom(), 0, 0);
@@ -435,15 +465,23 @@
             (t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2);
   }, { passive: false });
 
-  el.vstage.addEventListener('touchend', function (e) {
-    if (e.touches.length < 2) pinchFrom = 0;
-  }, { passive: true });
-
-  /* double-tap toggles whole-chart / own-scale */
+  /* One touchend handler: ending a pinch stores the size, a double tap toggles
+     between the whole chart and the reader's size. Keeping them together
+     avoids depending on the order two listeners happen to fire in. */
   var lastTap = 0;
+
   el.vstage.addEventListener('touchend', function (e) {
+    if (pinchFrom) {
+      if (e.touches.length < 2) {
+        rememberZoom();
+        pinchFrom = 0;
+        lastTap = 0;            // lifting from a pinch is not the first of a double tap
+      }
+      return;
+    }
+    if (e.changedTouches.length !== 1) return;
     var now = Date.now();
-    if (now - lastTap < 300 && e.changedTouches.length === 1) {
+    if (now - lastTap < 300) {
       var t = e.changedTouches[0];
       setZoom(zoom > 1.05 ? 1 : readingZoom(), t.clientX, t.clientY);
       lastTap = 0;
